@@ -2,132 +2,11 @@ import requests
 import re
 from urllib import parse
 import lxml.etree
+from tools_mysql import *
 from tools import *
-import random
-import time
-import datetime
 from mylog import My_log
 
 logger = My_log('lyl').get_logger()
-
-
-def before15_days(strs):
-    """
-    把某个时间字符串推前15天
-    :param strs: 时间字符串，格式为 【20 March 2019】
-    :return:
-    """
-    datetime.timedelta(days=-15)
-    dd = datetime.datetime.strptime(strs, '%d %B %Y') + datetime.timedelta(days=-15)
-    cc = datetime.datetime.strftime(dd, '%d %B %Y')
-    return cc
-
-
-def conn_mysql():
-    """
-    数据库链接
-    :return: 数据库链接对象
-    """
-    import pymysql
-    mysql_ip = '127.0.0.1'
-    mysql_database = 'test'
-    mysql_password = 'liuyalong'
-    mysql_username = 'root'
-    mysql_db = pymysql.connect(mysql_ip, mysql_username, mysql_password, mysql_database, use_unicode=True,
-                               charset='utf8')
-    return mysql_db
-
-
-mysql_db = conn_mysql()
-
-
-def update_into_mysql(url):
-    """
-    更新bsr_uk表，对访问过的url的visted字段设置为1
-    :param url: url地址
-    :return:
-    """
-    curs = mysql_db.cursor()
-    sql = '''UPDATE bsr_uk set visted=1 WHERE url='{}';'''.format(url)
-    try:
-        curs.execute(sql)
-        mysql_db.commit()
-    except Exception as e:
-        print('update_into_mysql', sql, e)
-
-
-def write_into_mysql(table, data, deepth, visted):
-    """
-    把数据写入mysql
-    :param table: 表名
-    :param data: 要写入的数据，格式：（'',''）
-    :param deepth: 当前数据的深度
-    :param visted: 是否被访问过，理论上应该默认为0
-    :return:
-    """
-    curs = mysql_db.cursor()
-    sql = '''insert into {} values ("{}","{}",{},{})'''.format(table, data[0], data[1], deepth, visted)
-    try:
-        curs.execute(sql)
-        mysql_db.commit()
-    except Exception as e:
-        print(data, '------', sql, e)
-    # curs.close()
-    # mysql_db.close()
-
-
-def bool_url_in_mysql(url):
-    """
-    查询某个url是否在数据库表中存在
-    :param url: url
-    :return: bool值
-    """
-    curs = mysql_db.cursor()
-    sql = '''SELECT * from bsr_uk where url='{}';'''.format(url)
-    try:
-        curs.execute(sql)
-        data = curs.fetchall()
-        if len(data) > 0:
-            return True
-        else:
-            return False
-    except Exception as e:
-        print(sql, e)
-
-
-def select_mysql(deepth):
-    """
-    查询数据库指定深度且没有访问过的url
-    :param deepth: 深度
-    :return:url元组，格式（（），（））
-    """
-    curs = mysql_db.cursor()
-    sql = '''select url from bsr_uk where deepth={} and visted=0'''.format(deepth)
-    try:
-        curs.execute(sql)
-        data = curs.fetchall()
-        return data
-    except Exception as e:
-        print(sql, e)
-
-
-def random_headers():
-    """
-    制造随机请求头，减少爬虫被封几率，此请求头针对amazon
-    :return: 请求头字典
-    """
-    headers = {
-        # 'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        # 'accept-encoding': 'gzip, deflate, br',
-        # 'accept-language': 'zh-CN,zh;q=0.8',
-        # 'cache-control': 'max-age=0',
-        # 'cookie': '%s' % random.choice(my_cookies),
-        # 'upgrade-insecure-requests': '1',
-        'user-agent': '%s' % random.choice(my_user_agent),
-        # 'user-agent':,
-
-    }
-    return headers
 
 
 def get_request(url):
@@ -145,51 +24,6 @@ def get_request(url):
         print(e)
         print('请求失败：', url)
         return 'failed'
-
-
-def re_clear_str(args):
-    """
-    清洗字符串，去掉换行符，开头和结尾的空格
-    :param args: 需要清洗的字符串
-    :return: 清洗后的字符串
-    """
-    if isinstance(args, list):
-        strs = ''.join(args)
-    elif isinstance(args, str):
-        strs = args
-    else:
-        print('re_clear_str函数传入参数格式不对')
-
-    # 换行符剔除
-    tmp = re.sub('\n|\r|\t|\f', '', strs)
-    tmp = re.sub('\xa0', ' ', tmp)
-    # 剔除首尾空格
-    tmp = tmp.strip()
-    return tmp
-
-
-def clear_other_list(list0, list1):
-    """
-    删除第一个列表中在第二个列表里的数据
-    :param list0: 总数据列表
-    :param list1: 需要剔除的元素列表
-    :return: 清洗后的列表
-    """
-    for i in list0:
-        if i in list1:
-            list0.remove(i)
-    return list0
-
-
-def list_to_str(list_a):
-    """
-    把列表转化为字符串，并去除换行符和首位空格
-    :param list_a:
-    :return:
-    """
-    a = ''.join(list_a)
-    a = re_clear_str(a)
-    return a
 
 
 def get_sell_time(asin, page):
@@ -491,20 +325,6 @@ def search_by_key(key, page):
     return result
 
 
-def is_robot(strs):
-    """
-    验证码认证是否是机器人
-    :param strs:
-    :return:
-    """
-    a = re.findall("Sorry, we just need to make sure you're not a robot", strs)
-    if len(a) > 0:
-        print('卧槽！爬虫被发现了！')
-        return True
-    else:
-        return False
-
-
 def asins_by_key(key, page):
     """
     查询第page页的商品asin
@@ -544,19 +364,6 @@ def asins_by_key(key, page):
             print('解析规则：3')
     result_asin = clear_other_list(asin, sp_asin)
     return result_asin
-
-
-def max_len_lists(*args):
-    """
-    返回几个列表元素最多的列表
-    :param args:
-    :return:
-    """
-    mydict = {}
-    for i in range(len(args)):
-        mydict[i] = len(args[i])
-    a = sorted(mydict.items(), key=lambda x: x[1], reverse=True)
-    return args[a[0][0]]
 
 
 def find_sp_asins(html):
@@ -608,4 +415,3 @@ if __name__ == '__main__':
     # print(asins)
     # print('原', len(asins), '去重', len(set(asins)))
 
-    # mysql_db.close()
