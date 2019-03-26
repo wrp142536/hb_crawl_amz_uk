@@ -1,0 +1,17 @@
+.git
+.idea/
+*/.idea/
+*/.settings/*
+__pycache__/*
+*.bak
+*.xlsx
+*.txt
+*.mat
+*.spec
+*.exe
+*.log
+*.bat
+old/*
+*.jpg
+*.png
+test*.py
