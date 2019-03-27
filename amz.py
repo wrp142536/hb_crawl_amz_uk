@@ -44,6 +44,7 @@ def get_request(url):
     :param url: url
     :return: html字符串
     """
+    print('即将请求：', url)
     headers = random_headers()
     try:
         resp = requests.get(url=url, headers=headers)
@@ -86,8 +87,6 @@ def listing_uk(asin):
     :param asin: asin
     :return:
     """
-    print('开始解析asin：', asin)
-    print()
     listing = {
         '标题': 'null',
         'asin': asin,
@@ -115,34 +114,18 @@ def listing_uk(asin):
     for rank_rule in lst.rules_rank():
         if rank_rule[0] == 're_S':
             ranks = re.findall(rank_rule[1], a, re.S)
-            ranks = re_clear_str(ranks)
-            if len(ranks) > 0:
-                ranks = re.findall('(.*) in (.*)\(', ranks)
-                # 大类中排名
-                listing['大类中排名'] = ranks[0][0].replace(' ', '')
-                # 大类名称
-                listing['大类名字'] = ranks[0][1]
-                break
         elif rank_rule[0] == 'xpath':
             ranks = mytree.xpath(rank_rule[1])
-            ranks = re_clear_str(ranks)
-            if len(ranks) > 0:
-                ranks = re.findall('(.*) in (.*)\(', ranks)
-                # 大类中排名
-                listing['大类中排名'] = ranks[0][0].replace(' ', '')
-                # 大类名称
-                listing['大类名字'] = ranks[0][1]
-                break
         else:
             ranks = re.findall(rank_rule[1], a)
-            ranks = re_clear_str(ranks)
-            if len(ranks) > 0:
-                ranks = re.findall('(.*) in (.*)\(', ranks)
-                # 大类中排名
-                listing['大类中排名'] = ranks[0][0].replace(' ', '')
-                # 大类名称
-                listing['大类名字'] = ranks[0][1]
-                break
+        ranks = re_clear_str(ranks)
+        if len(ranks) > 0:
+            ranks = re.findall('(.*) in (.*)\(', ranks)
+            # 大类中排名
+            listing['大类中排名'] = ranks[0][0].replace(' ', '')
+            # 大类名称
+            listing['大类名字'] = ranks[0][1]
+            break
 
     # 子类排名情况
     for child_rank in lst.rules_child_rank():
@@ -180,14 +163,13 @@ def listing_uk(asin):
     for price in lst.rules_price():
         if price[0] == 're':
             price1 = re.findall(price[1], a)
-            if len(price1) > 0:
-                listing['价格'] = price1[0]
-                break
-        elif price[0] == 'xpath':
-            price3 = mytree.xpath(price[1])
-            if len(price3) > 0:
-                listing['价格'] = price3[0]
-                break
+
+        # elif price[0] == 'xpath':
+        else:
+            price1 = mytree.xpath(price[1])
+        if len(price1) > 0:
+            listing['价格'] = price1[0]
+            break
 
     # 品牌
     for pp in lst.rules_pinpai():
@@ -202,33 +184,26 @@ def listing_uk(asin):
         if title_rule[0] == 're_S':
             titles = re.findall(title_rule[1], a, re.S)
             titles = re_clear_str(titles)
-            if len(titles) > 0:
-                listing['标题'] = titles
-                break
         elif title_rule[0] == 'xpath':
             titles = mytree.xpath(title_rule[1])
-            if len(titles) > 0:
-                listing['标题'] = titles[0]
-                break
         else:
             titles = re.findall(title_rule[1], a)
             titles = re_clear_str(titles)
-            if len(titles) > 0:
-                listing['标题'] = titles
-                break
+
+        if len(titles) > 0:
+            listing['标题'] = titles
+            break
 
     # 上架时间（如果能找到发布的上架时间信息，如果没有，取评论时间-15天）
     for sell in lst.rules_sell_time():
         if sell[0] == 'xpath':
             sell_time = mytree.xpath(sell[1])
-            if len(sell_time) > 0:
-                listing['上架时间'] = sell_time[0]
-                break
-        elif sell[0] == 're':
+        # elif sell[0] == 're':
+        else:
             sell_time = re.findall(sell[1], a)
-            if len(sell_time) > 0:
-                listing['上架时间'] = sell_time[0]
-                break
+        if len(sell_time) > 0:
+            listing['上架时间'] = sell_time[0]
+            break
     # 如果商品页没有上架时间，取评论时间
     if listing['上架时间'] == 'null':
         if listing['评论数'] != 'null':
@@ -381,8 +356,6 @@ def search_by_key(key, page):
     # 请求，构造url
     url = 'https://www.amazon.co.uk/s?k={}&page={}'.format(url_key, page)
     result = get_request(url)
-    print('即将请求：', url)
-
     return result
 
 
@@ -445,8 +418,7 @@ if __name__ == '__main__':
     # print(len(asins))
 
     # print(asins)
-    # listing_uk('B000WI02HG')
+    listing_uk('604079156X')
     # get_sell_time('B01E8ZKD3G', 2)
 
-    asins_by_key('bluetooth headphones', 1)
-
+    # asins_by_key('bluetooth headphones', 1)
