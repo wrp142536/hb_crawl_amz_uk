@@ -44,6 +44,7 @@ class Reveiews:
             self.star = 'all_stars'
 
     def make_url(self):
+        # TODO 根据数量选择1~n页,此函数返回最大页，需要修改
         url = f'https://www.amazon.co.uk/product-reviews/{self.asin}?&reviewerType={self.filter_by}&pageNumber=' \
             f'{(int(self.number) - 1) // 10 + 1}&filterByStar={self.star}&sortBy={self.sort}'
         return url
