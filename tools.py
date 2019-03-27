@@ -286,7 +286,7 @@ def random_headers():
         # 'accept-encoding': 'gzip, deflate, br',
         # 'accept-language': 'zh-CN,zh;q=0.8',
         # 'cache-control': 'max-age=0',
-        # 'cookie': '%s' % random.choice(my_cookies),
+        'cookie': '%s' % random.choice(my_cookies),
         # 'upgrade-insecure-requests': '1',
         'user-agent': '%s' % random.choice(my_user_agent),
         # 'user-agent':,

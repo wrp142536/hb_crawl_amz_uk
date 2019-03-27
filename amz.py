@@ -9,6 +9,25 @@ from mylog import My_log
 logger = My_log('lyl').get_logger()
 
 
+def parse_robot(html):
+    mytree = lxml.etree.HTML(html)
+    amzn = mytree.xpath('//form[@action="/errors/validateCaptcha"]/input[@name="amzn"]/@value')
+    amzn_r = mytree.xpath('//form[@action="/errors/validateCaptcha"]/input[@name="amzn-r"]/@value')
+    img = mytree.xpath('//form[@action="/errors/validateCaptcha"]//div[@class="a-row a-text-center"]/img/@src')
+    headers = random_headers()
+    a = requests.get(img[0], headers=headers)
+    amzn = parse.quote(amzn[0])
+    amzn_r = parse.quote(amzn_r[0])
+    with open('a.jpg', 'wb') as f:
+        f.write(a.content)
+    code = input("请输入验证码：")
+
+    url = '''https://www.amazon.co.uk/errors/validateCaptcha?amzn={}&amzn-r={}&field-keywords={}'''.format(amzn, amzn_r,
+                                                                                                           code)
+    aa = requests.get(url, headers=headers)
+    return aa.text
+
+
 def get_request(url):
     """
     对某个url进行get请求，
@@ -18,10 +37,12 @@ def get_request(url):
     headers = random_headers()
     try:
         resp = requests.get(url=url, headers=headers)
-        # print(resp.text)
-        return resp.text
-    except Exception as e:
-        # print(e)
+        if is_robot(resp.text):
+            result = parse_robot(resp.text)
+        else:
+            result = resp.text
+        return result
+    except Exception:
         logger.error('请求失败：{})'.format(url))
         return 'failed'
 
@@ -50,7 +71,7 @@ def get_sell_time(asin, page):
 
 
 def rules_title():
-    rules = [('re', '<span id="productTitle" class="a-size-large">(.*?)</span>?'),
+    rules = [('re_S', '<span id="productTitle" class="a-size-large">(.*?)</span>?'),
              ('xpath', '//span[@id="btAsinTitle"]/text()'),
              ('xpath', '//h1[@data-automation-id="title"]/text()'),
              ]
@@ -82,8 +103,11 @@ def listing_uk(asin):
     }
     # 根据asin解析出商品详情
     a = get_request("https://www.amazon.co.uk/dp/{}/?psc=1".format(asin))
-    # print(a)
-    # from strs import a
+
+    if is_robot(a):
+        a = parse_robot(a)
+        # return listing
+
     mytree = lxml.etree.HTML(a)
     # 排名情况
     rank_list1 = mytree.xpath('//li[@id="SalesRank"]/text()')
@@ -154,17 +178,35 @@ def listing_uk(asin):
         listing['品牌'] = pinpai2[0]
 
     # 标题
-    titles1 = re.findall('<span id="productTitle" class="a-size-large">(.*?)</span>?', a, re.S)
-    titles1 = re_clear_str(titles1)
-    titles2 = mytree.xpath('//span[@id="btAsinTitle"]/text()')
-    titles3 = mytree.xpath('//h1[@data-automation-id="title"]/text()')
-
-    if len(titles1) > 0:
-        listing['标题'] = titles1
-    elif len(titles2) > 0:
-        listing['标题'] = titles2[0]
-    elif len(titles3) > 0:
-        listing['标题'] = titles3[0]
+    for title_rule in rules_title():
+        if title_rule[0] == 're_S':
+            titles = re.findall(title_rule[1], a, re.S)
+            titles = re_clear_str(titles)
+            if len(titles) > 0:
+                listing['标题'] = titles
+                break
+        elif title_rule[0] == 'xpath':
+            titles = mytree.xpath(title_rule[1])
+            if len(titles) > 0:
+                listing['标题'] = titles[0]
+                break
+        else:
+            titles = re.findall(title_rule[1], a)
+            titles = re_clear_str(titles)
+            if len(titles) > 0:
+                listing['标题'] = titles
+                break
+    # titles1 = re.findall('<span id="productTitle" class="a-size-large">(.*?)</span>?', a, re.S)
+    # titles1 = re_clear_str(titles1)
+    # titles2 = mytree.xpath('//span[@id="btAsinTitle"]/text()')
+    # titles3 = mytree.xpath('//h1[@data-automation-id="title"]/text()')
+    #
+    # if len(titles1) > 0:
+    #     listing['标题'] = titles1
+    # elif len(titles2) > 0:
+    #     listing['标题'] = titles2[0]
+    # elif len(titles3) > 0:
+    #     listing['标题'] = titles3[0]
 
     # 上架时间（如果能找到发布的上架时间信息，如果没有，取评论时间-15天）
     # sell_time1 = re.findall('<td class="label">Date First Available</td>', a)
@@ -283,6 +325,8 @@ def secrch_by_bsr(url, number):
     """
     # 按照bsr采集asin
     html_str = get_request(url)
+    if is_robot(html_str):
+        return []
     number = int(number)
     mytree = lxml.etree.HTML(html_str)
     aa = mytree.xpath('//ol[@id="zg-ordered-list"]//li//a[@class="a-link-normal"]//@href')
@@ -311,7 +355,7 @@ def secrch_by_bsr(url, number):
 
 def search_by_key(key, page):
     """
-    查询第page页的商品信息
+    通过关键字查询第page页
     :param key: 关键字，以空格区别多个关键字
     :param page: 页码
     :return: 返回第page页的html字符串
@@ -419,9 +463,9 @@ if __name__ == '__main__':
     # print(len(asins))
 
     # print(asins)
-    # listing_uk('B01DZ5HR66')
+    listing_uk('B01DZ5HR66')
     # get_sell_time('B01E8ZKD3G', 2)
 
-    asins = asins_by_key('bluetooth headphones', 1)
-    print(asins)
-    print('原', len(asins), '去重', len(set(asins)))
+    # asins = asins_by_key('bluetooth headphones', 1)
+    # print(asins)
+    # print('原', len(asins), '去重', len(set(asins)))
