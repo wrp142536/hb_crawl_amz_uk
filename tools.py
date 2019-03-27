@@ -335,10 +335,14 @@ def clear_other_list(list0, list1):
     :param list1: 需要剔除的元素列表
     :return: 清洗后的列表
     """
-    for i in list0:
-        if i in list1:
-            list0.remove(i)
-    return list0
+
+    # for i in list0:
+    #     if i in list1:
+    #         list0.remove(i)
+    #         print('删除',i)
+    # return list0
+    li = [k for k in list0 if k not in list1]
+    return li
 
 
 def list_to_str(list_a):
@@ -377,3 +381,14 @@ def max_len_lists(*args):
         mydict[i] = len(args[i])
     a = sorted(mydict.items(), key=lambda x: x[1], reverse=True)
     return args[a[0][0]]
+
+
+def list_quchong(list0):
+    """
+    列表去重，保持元素原先顺序
+    :param list0: 原数据，列表格式
+    :return: 去重后的列表，保留先出现的元素
+    """
+    new_li = list(set(list0))
+    new_li.sort(key=list0.index)
+    return new_li

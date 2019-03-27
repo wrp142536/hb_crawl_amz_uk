@@ -18,11 +18,11 @@ def get_request(url):
     headers = random_headers()
     try:
         resp = requests.get(url=url, headers=headers)
-        print(resp.text)
+        # print(resp.text)
         return resp.text
     except Exception as e:
-        print(e)
-        print('请求失败：', url)
+        # print(e)
+        logger.error('请求失败：{})'.format(url))
         return 'failed'
 
 
@@ -40,10 +40,21 @@ def get_sell_time(asin, page):
     time = mytree.xpath(
         '//div[@id="cm_cr-review_list"]//span[@class="a-size-base a-color-secondary review-date"]/text()')
     if len(time) > 0:
-        cc = before15_days(str(time[-1]))
-        return cc
+        try:
+            cc = before15_days(str(time[-1]))
+            return cc
+        except ValueError:
+            logger.error('asin:{}de 评论时间{}转换失败'.format(asin, time[-1]))
     else:
         return 'null'
+
+
+def rules_title():
+    rules = [('re', '<span id="productTitle" class="a-size-large">(.*?)</span>?'),
+             ('xpath', '//span[@id="btAsinTitle"]/text()'),
+             ('xpath', '//h1[@data-automation-id="title"]/text()'),
+             ]
+    return rules
 
 
 def listing_uk(asin):
@@ -178,7 +189,8 @@ def listing_uk(asin):
                     page = nums // 10 + 1
                 listing['上架时间'] = get_sell_time(asin, page)
             except Exception as e:
-                print('评论数转为页码失败', e)
+                logger.error('asin:{}评论数转为页码失败,{}'.format(asin, e))
+                # print('评论数转为页码失败', e)
 
     # 图片url
     pic_list = mytree.xpath('//div[@class="imgTagWrapper"]/img/@src')
@@ -293,8 +305,8 @@ def secrch_by_bsr(url, number):
             if len(tmp) == 0:
                 continue
             asins.append(tmp[0])
-    asins = list(set(asins))
-    return asins[:number + 1]
+    asins = list_quchong(asins)
+    return asins[:number]
 
 
 def search_by_key(key, page):
@@ -340,7 +352,6 @@ def asins_by_key(key, page):
     mytree = lxml.etree.HTML(html)
     # 通过xpath格式化，转为字符串，以供正则使用
     html_reg = lxml.etree.tostring(mytree, encoding=str, pretty_print=True)
-    print(html_reg)
     sp_asin = find_sp_asins(html_reg)
     if len(sp_asin) > 0:
         print('广告1', sp_asin)
@@ -350,18 +361,18 @@ def asins_by_key(key, page):
     # 各种规则
     asin1 = mytree.xpath('//div[contains(@data-cel-widget,"search_result_")]/@data-asin')
 
-    if len(asin1) > 19:
+    if len(asin1) > 0:
         asin = asin1
-        print('解析规则：1')
+        print('解析规则：1', len(asin))
     else:
         asin2 = mytree.xpath('//div[@class="s-result-list sg-row"]//div/@data-asin')
-        if len(asin2) > 19:
+        if len(asin2) > 0:
             asin = asin2
-            print('解析规则：2')
+            print('解析规则：2', len(asin))
         else:
             asin3 = mytree.xpath('//li[contains(@id,"result_")]//@data-asin')
             asin = asin3
-            print('解析规则：3')
+            print('解析规则：3', len(asin))
     result_asin = clear_other_list(asin, sp_asin)
     return result_asin
 
@@ -400,18 +411,17 @@ def find_sp_asins2(mytree):
 if __name__ == '__main__':
     pass
     # a=search_by_key('shoes nike',1)
-    # 总数据存储在bsr_types_list中
+
     # tups = get_first_types()
     # all_types(tups)
-    # bsr_url = 'https://www.amazon.co.uk/Best-Sellers-Computers-Accessories-Flatbed-Scanners/zgbs/computers/430592031'
+    # bsr_url = 'https://www.amazon.co.uk/Best-Sellers-Health-Personal-Care-Ponytail-Holders/zgbs/drugstore/2867998031/ref=zg_bs_nav_d_4_2867997031'
     # asins = secrch_by_bsr(bsr_url, 100)
     # print(len(asins))
+
     # print(asins)
-    listing_uk('B01DZ5HR66')
+    # listing_uk('B01DZ5HR66')
     # get_sell_time('B01E8ZKD3G', 2)
 
-    # all_types()
-    # asins = asins_by_key('球', 1)
-    # print(asins)
-    # print('原', len(asins), '去重', len(set(asins)))
-
+    asins = asins_by_key('bluetooth headphones', 1)
+    print(asins)
+    print('原', len(asins), '去重', len(set(asins)))
