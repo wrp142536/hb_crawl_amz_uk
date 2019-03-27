@@ -212,7 +212,7 @@ def listing_uk(asin):
                 if nums > 5000:
                     page = 500
                 else:
-                    page = nums // 10 + 1
+                    page = (nums-1) // 10 + 1
                 listing['上架时间'] = get_sell_time(asin, page)
             except Exception as e:
                 logger.error('asin:{}评论数转为页码失败,{}'.format(asin, e))
