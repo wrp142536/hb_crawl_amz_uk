@@ -93,8 +93,8 @@ class SP_by_key:
 
     @staticmethod
     def sp():
-        rules = [('re_S', '<div.*?="a-popover-sp-info-popover-(.*?)"><span>These are ads'),
-                 ('re', '<div.*?="a-popover-sponsored-header-(.*?)"><span>These are ads'),
+        rules = [('re_S', 'a-popover-sp-info-popover-(.*?)"><span>These are ads'),
+                 ('re', 'a-popover-sponsored-header-(.*?)"><span>These are ads'),
                  ('xpath_replace', "//div[contains(@id,'a-popover-sp-info-popover-')]/@id"),
                  ]
         return rules

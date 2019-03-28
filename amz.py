@@ -212,7 +212,7 @@ def listing_uk(asin):
                 if nums > 5000:
                     page = 500
                 else:
-                    page = (nums-1) // 10 + 1
+                    page = (nums - 1) // 10 + 1
                 listing['上架时间'] = get_sell_time(asin, page)
             except Exception as e:
                 logger.error('asin:{}评论数转为页码失败,{}'.format(asin, e))
@@ -359,6 +359,7 @@ def search_by_key(key, page):
     return result
 
 
+@run_time
 def asins_by_key(key, page):
     """
     查询第page页的商品asin
@@ -418,7 +419,7 @@ if __name__ == '__main__':
     # print(len(asins))
 
     # print(asins)
-    listing_uk('604079156X')
+    # listing_uk('604079156X')
     # get_sell_time('B01E8ZKD3G', 2)
 
-    # asins_by_key('bluetooth headphones', 1)
+    asins_by_key('water bottle', 1)
