@@ -1,6 +1,7 @@
 from amz import get_request
 import lxml.etree
 from tools import list_to_str
+import re
 
 
 class Q_and_A:
@@ -30,6 +31,7 @@ class Q_and_A:
     def parse(self):
         max_page = (int(self.number) - 1) // 10 + 1
         result = []
+        regx = re.compile('asked on (.*)')
         for page in range(1, max_page + 1):
             html = self.get_data(page)
             mytree = lxml.etree.HTML(html)
@@ -39,8 +41,16 @@ class Q_and_A:
                 q = div.xpath('.//div[@class="a-fixed-left-grid-col a-col-right"]/a/span/text()')
                 a = div.xpath('.//div[@class="a-fixed-left-grid-col a-col-right"]/span/text()')
                 name = div.xpath('.//div[@class="a-profile-content"]/span/text()')
-                time = div.xpath('.//div[@class="a-section a-spacing-none a-spacing-top-micro"]/span/text()')
                 helpful = div.xpath('.//div[@class="a-fixed-left-grid-col a-col-left"]//span[@class="count"]/text()')
+                # 回答者的发表日期
+                # time = div.xpath('.//div[@class="a-section a-spacing-none a-spacing-top-micro"]/span/text()')
+                href = div.xpath('.//div[@class="a-fixed-left-grid-col a-col-right"]/a/@href')
+                if len(href) > 0:
+                    html_0 = get_request('https://www.amazon.co.uk' + href[0])
+                    # 提问者的发布日期
+                    time = regx.findall(html_0)
+                else:
+                    time = ''
                 q = list_to_str(q)
                 a = list_to_str(a)
                 if len(a) == 0:
@@ -56,6 +66,6 @@ class Q_and_A:
 
 
 if __name__ == '__main__':
-    q = Q_and_A('B0045XA94K', '10')
+    q = Q_and_A('B07CGWHV2C', '10')
     a = q.parse()
     print(a)
