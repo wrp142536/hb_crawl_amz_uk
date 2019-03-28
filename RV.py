@@ -62,22 +62,22 @@ class Reveiews:
         ids = mytree.xpath('//div[@id="cm_cr-review_list"]/div[@data-hook="review"]/@id')
         # print(ids)
         for id in ids:
-            names = mytree.xpath(f'//div[@id="{id}"]//span[@class="a-profile-name"]/text()')
-            time = mytree.xpath(f'//div[@id="{id}"]//span[@data-hook="review-date"]/text()')
-            title = mytree.xpath(f'//div[@id="{id}"]//a[@data-hook="review-title"]/span/text()')
-            text = mytree.xpath(f'//div[@id="{id}"]//span[@data-hook="review-body"]/span/text()')
-            stars = mytree.xpath(f'//div[@id="{id}"]//span[@class="a-icon-alt"]/text()')
+            names = mytree.xpath(f'.//div[@id="{id}"]//span[@class="a-profile-name"]/text()')
+            time = mytree.xpath(f'.//div[@id="{id}"]//span[@data-hook="review-date"]/text()')
+            title = mytree.xpath(f'.//div[@id="{id}"]//a[@data-hook="review-title"]/span/text()')
+            text = mytree.xpath(f'.//div[@id="{id}"]//span[@data-hook="review-body"]/span/text()')
+            stars = mytree.xpath(f'.//div[@id="{id}"]//span[@class="a-icon-alt"]/text()')
             if len(stars) > 0:
                 star = regx1.findall(stars[0])
             else:
                 star = []
-            urls = mytree.xpath(f'//div[@id="{id}"]//a[@data-hook="format-strip"]/@href')
+            urls = mytree.xpath(f'.//div[@id="{id}"]//a[@data-hook="format-strip"]/@href')
             if len(urls) > 0:
                 asin = regx.findall(urls[0])
             else:
                 asin = []
-            size1 = mytree.xpath(f'//div[@id="{id}"]//a[@data-hook="format-strip"]/text()')
-            numbers = mytree.xpath(f'//div[@id="{id}"]//span[@data-hook="helpful-vote-statement"]/text()')
+            size1 = mytree.xpath(f'.//div[@id="{id}"]//a[@data-hook="format-strip"]/text()')
+            numbers = mytree.xpath(f'.//div[@id="{id}"]//span[@data-hook="helpful-vote-statement"]/text()')
             if len(numbers) > 0:
                 helpful = regx2.findall(numbers[0])
             else:
