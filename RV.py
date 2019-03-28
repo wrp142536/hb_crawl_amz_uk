@@ -43,50 +43,53 @@ class Reveiews:
         elif str(star) == 'all':
             self.star = 'all_stars'
 
-    def make_url(self):
+    def make_url(self, page):
         # TODO 根据数量选择1~n页,此函数返回最大页，需要修改
         url = f'https://www.amazon.co.uk/product-reviews/{self.asin}?&reviewerType={self.filter_by}&pageNumber=' \
-            f'{(int(self.number) - 1) // 10 + 1}&filterByStar={self.star}&sortBy={self.sort}'
+            f'{page}&filterByStar={self.star}&sortBy={self.sort}'
         return url
 
-    def get_data(self):
-        html = get_request(self.make_url())
+    def get_data(self, page):
+        html = get_request(self.make_url(page))
         return html
 
     def parse(self):
-        html = self.get_data()
-        mytree = lxml.etree.HTML(html)
-        regx = re.compile('product-reviews/(.*?)ref')
+        max_page = (int(self.number) - 1) // 10 + 1
+        result = []
+        regx = re.compile('product-reviews/(.*?)/ref')
         regx1 = re.compile('(.*?) out')
         regx2 = re.compile('(.*?) people')
-        ids = mytree.xpath('//div[@id="cm_cr-review_list"]/div[@data-hook="review"]/@id')
-        # print(ids)
-        for id in ids:
-            names = mytree.xpath(f'.//div[@id="{id}"]//span[@class="a-profile-name"]/text()')
-            time = mytree.xpath(f'.//div[@id="{id}"]//span[@data-hook="review-date"]/text()')
-            title = mytree.xpath(f'.//div[@id="{id}"]//a[@data-hook="review-title"]/span/text()')
-            text = mytree.xpath(f'.//div[@id="{id}"]//span[@data-hook="review-body"]/span/text()')
-            stars = mytree.xpath(f'.//div[@id="{id}"]//span[@class="a-icon-alt"]/text()')
-            if len(stars) > 0:
-                star = regx1.findall(stars[0])
-            else:
-                star = []
-            urls = mytree.xpath(f'.//div[@id="{id}"]//a[@data-hook="format-strip"]/@href')
-            if len(urls) > 0:
-                asin = regx.findall(urls[0])
-            else:
-                asin = []
-            size1 = mytree.xpath(f'.//div[@id="{id}"]//a[@data-hook="format-strip"]/text()')
-            numbers = mytree.xpath(f'.//div[@id="{id}"]//span[@data-hook="helpful-vote-statement"]/text()')
-            if len(numbers) > 0:
-                helpful = regx2.findall(numbers[0])
-            else:
-                helpful = []
-            print(time, asin, title, text, star, helpful, size1, names)
-
-        # for a,b,c,d,e,f,g in zip(time,urls,title,text,star,size,names)
+        for page in range(1, max_page + 1):
+            html = self.get_data(page)
+            mytree = lxml.etree.HTML(html)
+            ids = mytree.xpath('//div[@id="cm_cr-review_list"]/div[@data-hook="review"]/@id')
+            # print(ids)
+            for id in ids:
+                names = mytree.xpath(f'.//div[@id="{id}"]//span[@class="a-profile-name"]/text()')
+                time = mytree.xpath(f'.//div[@id="{id}"]//span[@data-hook="review-date"]/text()')
+                title = mytree.xpath(f'.//div[@id="{id}"]//a[@data-hook="review-title"]/span/text()')
+                text = mytree.xpath(f'.//div[@id="{id}"]//span[@data-hook="review-body"]/span/text()')
+                stars = mytree.xpath(f'.//div[@id="{id}"]//span[@class="a-icon-alt"]/text()')
+                if len(stars) > 0:
+                    star = regx1.findall(stars[0])
+                else:
+                    star = []
+                urls = mytree.xpath(f'.//div[@id="{id}"]//a[@data-hook="format-strip"]/@href')
+                if len(urls) > 0:
+                    asin = regx.findall(urls[0])
+                else:
+                    asin = []
+                size1 = mytree.xpath(f'.//div[@id="{id}"]//a[@data-hook="format-strip"]/text()')
+                numbers = mytree.xpath(f'.//div[@id="{id}"]//span[@data-hook="helpful-vote-statement"]/text()')
+                if len(numbers) > 0:
+                    helpful = regx2.findall(numbers[0])
+                else:
+                    helpful = []
+                result.append((time, asin, title, text, star, helpful, size1, names))
+        return result[:int(self.number)]
 
 
 if __name__ == '__main__':
     rv = Reveiews('B01KORI78A', 10)
-    rv.parse()
+    aa = rv.parse()
+    print(aa)
