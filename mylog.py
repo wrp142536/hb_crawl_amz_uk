@@ -1,20 +1,17 @@
 import logging.config
+from tools import Singleton
 
-logging.config.fileConfig("log.conf")
 
-
-class My_log:
+class My_log(Singleton):
     """
     单例模式日志
     """
 
-    def __init__(self, name):
-        self.name = logging.getLogger(name)
+    def __init__(self, conf_file='log.conf'):
+        logging.config.fileConfig(conf_file)
+        pass
 
-    def __new__(cls, *args, **kwargs):
-        if not hasattr(cls, '_logger'):
-            cls._logger = object.__new__(cls)
-        return cls._logger
+    def get_logger(self, logger):
+        logger = logging.getLogger(logger)
+        return logger
 
-    def get_logger(self):
-        return self.name

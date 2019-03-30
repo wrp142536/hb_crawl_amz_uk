@@ -2,6 +2,7 @@ from amz import get_request
 import lxml.etree
 from tools import list_to_str
 import re
+from tools import date_strft, return_list0_to_str
 
 
 class Q_and_A:
@@ -61,11 +62,15 @@ class Q_and_A:
                 name = list_to_str(name)
                 time = list_to_str(time).replace('· ', '')
                 helpful = list_to_str(helpful)
+                try:
+                    time = date_strft(time)
+                except ValueError:
+                    time = '1970/01/01'
                 result.append((q, a, name, helpful, time))
         return result[:int(self.number)]
 
 
 if __name__ == '__main__':
-    q = Q_and_A('B07CGWHV2C', '10')
+    q = Q_and_A('B07CGWHV2C', 10)
     a = q.parse()
     print(a)

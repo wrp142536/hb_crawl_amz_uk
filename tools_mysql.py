@@ -1,17 +1,18 @@
+from tools import Singleton
+import pymysql
 
-def conn_mysql():
-    """
-    数据库链接
-    :return: 数据库链接对象
-    """
-    import pymysql
-    mysql_ip = '127.0.0.1'
-    mysql_database = 'test'
-    mysql_password = 'liuyalong'
-    mysql_username = 'root'
-    mysql_db = pymysql.connect(mysql_ip, mysql_username, mysql_password, mysql_database, use_unicode=True,
-                               charset='utf8')
-    return mysql_db
+
+class Conn_Mysql(Singleton):
+    def __init__(self, mysql_ip='127.0.0.1', mysql_database='test', mysql_password='liuyalong', mysql_username='root'):
+        self.mysql_ip = mysql_ip
+        self.mysql_database = mysql_database
+        self.mysql_password = mysql_password
+        self.mysql_username = mysql_username
+
+    def conn(self):
+        db = pymysql.connect(self.mysql_ip, self.mysql_username, self.mysql_password, self.mysql_database,
+                             use_unicode=True, charset='utf8')
+        return db
 
 
 def update_into_mysql(url):
@@ -85,4 +86,4 @@ def select_mysql(deepth):
 
 
 if __name__ == '__main__':
-    mysql_db = conn_mysql()
+    mysql_db = Conn_Mysql().conn()

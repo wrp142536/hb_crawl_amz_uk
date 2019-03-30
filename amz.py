@@ -6,13 +6,14 @@ from tools_mysql import *
 from tools import *
 from mylog import My_log
 from spider_rules import *
+import urllib3
+urllib3.disable_warnings()
 
 lst = Listing_Rules()
 sp_key = SP_by_key()
 rule_by_key = Search_by_key()
 
-logger = My_log('lyl').get_logger()
-
+logger = My_log('log.conf').get_logger('lyl')
 
 def parse_robot(html):
     """
@@ -46,8 +47,10 @@ def get_request(url):
     """
     print('即将请求：', url)
     headers = random_headers()
+    # proxies = my_proxy()
     try:
-        resp = requests.get(url=url, headers=headers)
+        # resp = requests.get(url=url, headers=headers, proxies=proxies, verify=False)
+        resp = requests.get(url=url, headers=headers,verify=False)
         if is_robot(resp.text):
             result = parse_robot(resp.text)
         else:
@@ -88,20 +91,20 @@ def listing_uk(asin):
     :return:
     """
     listing = {
-        '标题': 'null',
+        '标题': '',
         'asin': asin,
-        '品牌': 'null',
-        '大类中排名': 'null',
-        '大类名字': 'null',
-        '评论数': 'null',
-        '星级': 'null',
-        '价格': 'null',
-        '是否自营': 'null',
-        '上架时间': 'null',
-        '图片链接': 'null',
-        '国家': '英国',
-        '子类排名': 'null',
+        '品牌': '',
+        '大类中排名': 0,
+        '大类名字': '',
+        '评论数': 0,
+        '星级': 0,
+        '价格': '',
+        '是否自营': 0,
+        '上架时间': '1970/01/01',
+        '图片链接': '',
+        '子类排名': '[]',
     }
+    logger.info(f'开始解析{asin}')
     # 根据asin解析出商品详情
     a = get_request("https://www.amazon.co.uk/dp/{}/?psc=1".format(asin))
 
@@ -118,23 +121,31 @@ def listing_uk(asin):
             ranks = mytree.xpath(rank_rule[1])
         else:
             ranks = re.findall(rank_rule[1], a)
-        ranks = re_clear_str(ranks)
-        if len(ranks) > 0:
-            ranks = re.findall('(.*) in (.*)\(', ranks)
+        ranks0 = re_clear_str(ranks)
+        if len(ranks0) > 0:
+            ranks = re.findall('(.*) in (.*)\(', ranks0)
             # 大类中排名
             listing['大类中排名'] = ranks[0][0].replace(' ', '')
             # 大类名称
             listing['大类名字'] = ranks[0][1]
             break
+    if listing['大类中排名'] != 0:
+        try:
+            listing['大类中排名'] = int(listing['大类中排名'].replace(',', ''))
+        except Exception:
+            logger.error(f"大类排名格式化错误{listing['大类中排名']}")
 
     # 子类排名情况
     for child_rank in lst.rules_child_rank():
         if child_rank[0] == 'xpath':
-            ranks = mytree.xpath(child_rank[1])
-            if len(ranks) > 0:
-                child_rank_list1 = ranks[0].xpath('string(.)')
+            ranks1 = mytree.xpath(child_rank[1])
+            if len(ranks1) > 0:
+                child_rank_list1 = ranks1[0].xpath('string(.)')
                 child_rank1 = list_to_str(child_rank_list1)
-                listing['子类排名'] = child_rank1
+                child_rank2 = '[[' + str(listing['大类中排名']) + ',' + listing['大类名字'] + child_rank1 + ']]'
+                tmp_999 = re.sub('#', '],[', child_rank2)
+                listing['子类排名'] = re.sub(' in ', ',', tmp_999)
+                # listing['子类排名'] = child_rank1
                 break
 
     # 评论个数
@@ -150,14 +161,22 @@ def listing_uk(asin):
             if len(revs) > 0:
                 listing['评论数'] = revs[0]
                 break
+    if listing['评论数'] != 0:
+        try:
+            listing['评论数'] = int(listing['评论数'].replace(',', '').replace(' ', ''))
+        except Exception:
+            logger.error(f'评论数格式化失败：{listing["评论数"]}')
 
     # 评分，星级
     for score in lst.rules_scores():
         if score[0] == 're':
             tmp = re.findall(score[1], a)
             if len(tmp) > 0:
-                listing['星级'] = tmp[0]
-                break
+                try:
+                    listing['星级'] = float(tmp[0])
+                    break
+                except Exception:
+                    logger.error(f'星级格式化失败{tmp[0]}')
 
     # 价格
     for price in lst.rules_price():
@@ -204,11 +223,12 @@ def listing_uk(asin):
         if len(sell_time) > 0:
             listing['上架时间'] = sell_time[0]
             break
+
     # 如果商品页没有上架时间，取评论时间
-    if listing['上架时间'] == 'null':
-        if listing['评论数'] != 'null':
+    if listing['上架时间'] == '1970/01/01':
+        if listing['评论数'] != 0:
             try:
-                nums = int(listing['评论数'].replace(',', '').replace(' ', ''))
+                nums = listing['评论数']
                 if nums > 5000:
                     page = 500
                 else:
@@ -216,6 +236,12 @@ def listing_uk(asin):
                 listing['上架时间'] = get_sell_time(asin, page)
             except Exception as e:
                 logger.error('asin:{}评论数转为页码失败,{}'.format(asin, e))
+    else:
+        try:
+            # 格式化时间戳
+            listing['上架时间'] = date_strft(listing['上架时间'])
+        except Exception:
+            logger.error(f'上架时间格式化失败：{listing["上架时间"]}')
 
     # 图片url
     for pic in lst.rules_pic():
@@ -234,9 +260,9 @@ def listing_uk(asin):
         if ziying[0] == 're':
             is_ziying = re.findall(ziying[1], a)
             if len(is_ziying) > 0:
-                listing['是否自营'] = 'yes'
-
-    print(listing.items())
+                listing['是否自营'] = 1
+    return listing.items()
+    # print(listing.items())
 
 
 def get_first_types():
@@ -306,7 +332,9 @@ def secrch_by_bsr(url, number):
     # 按照bsr采集asin
     html_str = get_request(url)
     if is_robot(html_str):
-        return []
+        logger.error(f'访问{url}需要验证码')
+        # TODO BUG here
+        html_str = parse_robot(html_str)
     number = int(number)
     mytree = lxml.etree.HTML(html_str)
     aa = mytree.xpath('//ol[@id="zg-ordered-list"]//li//a[@class="a-link-normal"]//@href')
@@ -333,7 +361,7 @@ def secrch_by_bsr(url, number):
     return asins[:number]
 
 
-def search_by_key(key, page):
+def html_search_by_key(key, page):
     """
     通过关键字查询第page页
     :param key: 关键字，以空格区别多个关键字
@@ -359,7 +387,7 @@ def search_by_key(key, page):
     return result
 
 
-@run_time
+# @run_time
 def asins_by_key(key, page):
     """
     查询第page页的商品asin
@@ -367,7 +395,7 @@ def asins_by_key(key, page):
     :param page: 页码
     :return: 返回asin列表(去掉广告后)
     """
-    html = search_by_key(key, page)
+    html = html_search_by_key(key, page)
     if is_robot(html):
         html = parse_robot(html)
 
@@ -401,16 +429,17 @@ def asins_by_key(key, page):
             if len(asin) > 0:
                 asin_result = asin
     result_asin = clear_other_list(asin_result, sp_asin)
-    print(f'总asin{len(asin_result)}个：', asin_result)
-    print(f'广告asin共{len(sp_asin)}个：：', sp_asin)
-    print(f'清洗后asin{len(result_asin)}个：:', result_asin)
+    logger.info(f'关键字搜索{key}：总{len(asin_result)}个,广告共{len(sp_asin)}个,清洗后{len(result_asin)}个', )
+    # print(f'总asin{len(asin_result)}个：', asin_result)
+    # print(f'广告asin共{len(sp_asin)}个：：', sp_asin)
+    # print(f'清洗后asin{len(result_asin)}个：:', result_asin)
 
     return result_asin
 
 
 if __name__ == '__main__':
     pass
-    # a=search_by_key('shoes nike',1)
+    # a=html_search_by_key('shoes nike',1)
 
     # tups = get_first_types()
     # all_types(tups)
@@ -419,7 +448,8 @@ if __name__ == '__main__':
     # print(len(asins))
 
     # print(asins)
-    # listing_uk('604079156X')
+    a = listing_uk('0345520106')
+    print(a)
     # get_sell_time('B01E8ZKD3G', 2)
 
-    asins_by_key('water bottle', 1)
+    # asins_by_key('water bottle', 1)

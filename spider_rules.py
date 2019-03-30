@@ -49,6 +49,8 @@ class Listing_Rules:
         rules = [('re', 'class="a-size-medium a-color-price">(.*)</span>'),
                  ('re', 'class="a-color-price a-text-bold">(.*)</span>'),
                  ('xpath', '//td[@class="a-color-price a-size-medium a-align-bottom"]/text()'),
+                 ('xpath', '//span[@class="a-size-medium a-color-price offer-price a-text-normal"]/text()'),
+                 ('xpath', '//span[@id="color_name_1_price"]/span[@class="a-size-mini twisterSwatchPrice"]/text()'),
                  (
                      'xpath',
                      '//button[@class="av-button av-button--default js-purchase-button dv-record-reftag"]/text()'),
@@ -79,6 +81,7 @@ class Listing_Rules:
                  ('xpath', '//div[@class="av-fallback-packshot"]/img/@src'),
                  ('xpath', '//div[@class="imgTagWrapper"]/img/@data-old-hires'),
                  ('xpath', '//div[@class="imgTagWrapper"]/img/@data-a-dynamic-image'),
+                 ('xpath', '//div[@id="img-canvas"]/img/@data-a-dynamic-image'),
                  ]
         return rules
 

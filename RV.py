@@ -1,6 +1,7 @@
 from amz import get_request
 import lxml.etree
 import re
+from tools import date_strft,return_list0_to_str
 
 
 class Reveiews:
@@ -57,8 +58,10 @@ class Reveiews:
         max_page = (int(self.number) - 1) // 10 + 1
         result = []
         regx = re.compile('product-reviews/(.*?)/ref')
+        regx0 = re.compile('product-reviews/(.*?)\?')
         regx1 = re.compile('(.*?) out')
         regx2 = re.compile('(.*?) people')
+        regx3 = re.compile('(.*?) person')
         for page in range(1, max_page + 1):
             html = self.get_data(page)
             mytree = lxml.etree.HTML(html)
@@ -67,6 +70,7 @@ class Reveiews:
             for id in ids:
                 names = mytree.xpath(f'.//div[@id="{id}"]//span[@class="a-profile-name"]/text()')
                 time = mytree.xpath(f'.//div[@id="{id}"]//span[@data-hook="review-date"]/text()')
+
                 title = mytree.xpath(f'.//div[@id="{id}"]//a[@data-hook="review-title"]/span/text()')
                 text = mytree.xpath(f'.//div[@id="{id}"]//span[@data-hook="review-body"]/span/text()')
                 stars = mytree.xpath(f'.//div[@id="{id}"]//span[@class="a-icon-alt"]/text()')
@@ -77,19 +81,47 @@ class Reveiews:
                 urls = mytree.xpath(f'.//div[@id="{id}"]//a[@data-hook="format-strip"]/@href')
                 if len(urls) > 0:
                     asin = regx.findall(urls[0])
+                    if len(asin) == 0:
+                        asin = regx0.findall(urls[0])
                 else:
                     asin = []
                 size1 = mytree.xpath(f'.//div[@id="{id}"]//a[@data-hook="format-strip"]/text()')
+                if len(size1) > 0:
+                    size1 = '||'.join(size1)
+                else:
+                    size1 = ''
                 numbers = mytree.xpath(f'.//div[@id="{id}"]//span[@data-hook="helpful-vote-statement"]/text()')
                 if len(numbers) > 0:
                     helpful = regx2.findall(numbers[0])
+                    if len(helpful) == 0:
+                        helpful = regx3.findall(numbers[0])
+                        if len(helpful) > 0:
+                            helpful = helpful[0].replace('One', '1')
                 else:
-                    helpful = []
+                    helpful = 0
+
+                if len(time) > 0:
+                    time = date_strft(time[0])
+                else:
+                    time = '1970/01/01'
+
+                if len(star) > 0:
+                    star = float(star[0].replace(' ', ''))
+                else:
+                    star = 0
+                names = return_list0_to_str(names)
+                title = return_list0_to_str(title)
+                text = return_list0_to_str(text)
+                asin = return_list0_to_str(asin)
+
                 result.append((time, asin, title, text, star, helpful, size1, names))
+
         return result[:int(self.number)]
 
 
 if __name__ == '__main__':
-    rv = Reveiews('B01KORI78A', 10)
+    rv = Reveiews('B07CS1XKST', 10)
     aa = rv.parse()
-    print(aa)
+    print(len(aa))
+    for i in aa:
+        print(i)
