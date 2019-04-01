@@ -1,6 +1,10 @@
-from tools import Singleton
-from amz import asins_by_key, listing_uk, secrch_by_bsr
+from tools import Singleton, clear_other_list
+from amz import asins_by_key, listing_uk, secrch_by_bsr, logger
 from tools_mysql import Conn_Mysql
+import datetime
+from QA import Q_and_A
+from RV import Reveiews
+import re
 
 
 class GET_TASK(Singleton):
@@ -8,15 +12,33 @@ class GET_TASK(Singleton):
     cursor = db.cursor()
 
     @classmethod
-    def get_task(cls):
-        sql = f'''SELECT id,country FROM task ORDER BY id desc limit 1'''
+    def get_black_flag_id(cls):
+        # 此处只查英国站的黑名单
+        sql = f'''SELECT id FROM black_flag where country='uk';'''
         cls.cursor.execute(sql)
         data = cls.cursor.fetchall()
         return data
 
     @classmethod
-    def get_task_info(cls, data, flag):
-        sql = f'''SELECT info,number FROM task_info where task_id={data[0][0]} and {flag}=1'''
+    def get_task_id(cls):
+        # 返回任务id（未完成的任务）和黑名单标记id
+        sql = f'''SELECT id,black_flag_id FROM task where is_finished=0 order by id desc limit 1;'''
+        cls.cursor.execute(sql)
+        data = cls.cursor.fetchall()
+        return data
+
+    @classmethod
+    def get_task_info(cls, task_id):
+        sql = f'''SELECT * FROM task_info where task_id={task_id} ;'''
+        cls.cursor.execute(sql)
+        data = cls.cursor.fetchall()
+        return data
+
+    @classmethod
+    def get_black_List(cls, black_flag_id):
+        if black_flag_id == 0:
+            return [[]]
+        sql = f'''SELECT asin FROM black_list where black_flag_id={black_flag_id};'''
         cls.cursor.execute(sql)
         data = cls.cursor.fetchall()
         return data
@@ -35,13 +57,17 @@ class Start_Task(GET_TASK):
         super(Start_Task, self).__init__(**kwargs)
         self.db = Start_Task.db
         self.cursor = self.db.cursor()
-        if not (kwargs.__contains__('key') or kwargs.__contains__('asin') or kwargs.__contains__('bsr')):
-            print('参数输入错误')
-            raise ValueError
-        self.kwargs = kwargs
+        if kwargs:
+            self.kwargs = kwargs
+            if not (kwargs.__contains__('key') or kwargs.__contains__('asin') or kwargs.__contains__(
+                    'bsr') or kwargs.__contains__('qa') or kwargs.__contains__('rv')):
+                print('参数输入错误')
+                raise ValueError
+        else:
+            self.kwargs = {}
         self.all_asin = []
 
-    def parse(self):
+    def parse_task_dict(self, task_id, black_flag_id):
         # 获取所有的asin
         if self.kwargs.__contains__('key'):
             for k in self.kwargs['key']:
@@ -54,6 +80,39 @@ class Start_Task(GET_TASK):
         if self.kwargs.__contains__('asin'):
             self.all_asin.append(self.kwargs['asin'])
 
+        if self.kwargs.__contains__('qa'):
+            reg_asin = re.compile('asin=(.*?)&')
+            reg_QANum = re.compile('QANum=(.*?)&')
+            reg_sort = re.compile('sort=(.*?)&')
+            for jj in self.kwargs['qa']:
+                jj = jj + '&'
+                asin = reg_asin.findall(jj)
+                QANum = reg_QANum.findall(jj)
+                sort = reg_sort.findall(jj)
+                qa = Q_and_A(asin[0], QANum[0], sort[0])
+                qa_data = qa.parse()
+                for data in qa_data:
+                    self.save_data(data, 'qa', task_id, black_flag_id, asin[0])
+
+        if self.kwargs.__contains__('review'):
+            reg_asin = re.compile('asin=(.*?)&')
+            reviewsNum = re.compile('reviewsNum=(.*?)&')
+            reg_sortBy = re.compile('sortBy=(.*?)&')
+            reg_filterByStar = re.compile('filterByStar=(.*?)&')
+            reg_reviewerType = re.compile('reviewerType=(.*?)&')
+            for jj in self.kwargs['review']:
+                jj = jj + '&'
+                asin = reg_asin.findall(jj)
+                Num = reviewsNum.findall(jj)
+                sort = reg_sortBy.findall(jj)
+                star = reg_filterByStar.findall(jj)
+                filter_by = reg_reviewerType.findall(jj)
+
+                rv = Reveiews(asin[0], Num[0], sort[0], star[0], filter_by[0])
+                rv_data = rv.parse()
+                for data in rv_data:
+                    self.save_data(data, 'review', task_id, black_flag_id, asin[0])
+
     def listing(self):
         if self.kwargs.__contains__('black_asin_list'):
             asins = (i for item in self.all_asin for i in item if i not in self.kwargs['black_asin_list'])
@@ -65,13 +124,94 @@ class Start_Task(GET_TASK):
             result.append(my_items)
         return result
 
+    def parse_task_datas_to_dict(self, datas):
+        key = []
+        bsr = []
+        asin = []
+        qa = []
+        review = []
+        for data in datas:
+            if data[1] == 1:
+                key.append([data[7], data[4]])
+            elif data[2] == 1:
+                bsr.append([data[7], data[4]])
+            elif data[3] == 1:
+                asin.append(data[7])
+            elif data[5] == 1:
+                qa.append(data[7])
+            elif data[6] == 1:
+                review.append(data[7])
+            else:
+                print('任务有问题！')
+        self.kwargs['key'] = key
+        self.kwargs['bsr'] = bsr
+        self.kwargs['asin'] = asin
+        self.kwargs['qa'] = qa
+        self.kwargs['review'] = review
+
+    def save_data(self, data, table, task_id, black_flag_id, asin):
+        run_time = datetime.datetime.strftime(datetime.datetime.today(), '%Y/%m/%d')
+        if table == 'product_info':
+            sql = f'''insert into {table} (run_time ,asin ,brand ,title ,price ,pic_url ,
+            rev_num ,star ,is_amazon ,first_category,first_category_rank,date_first_available,
+            sellers_rank,task_id,black_flag_id ) values ('{run_time}','{data["asin"]}','{data["品牌"]}',
+            '{data["标题"]}','{data["价格"]}','{data["图片链接"]}','{data["评论数"]}','{data["星级"]}',
+            '{data["是否自营"]}','{data["大类名字"]}','{data["大类中排名"]}','{data["上架时间"]}',"{data['子类排名']}",
+            '{task_id}','{black_flag_id}');'''
+            try:
+                self.cursor.execute(sql)
+            except Exception:
+                logger.error(sql)
+                return
+            self.db.commit()
+        elif table == 'review':
+            for pp in data:
+                sql = f'''insert into {table} (product_asin,review_date,title,content,star,helpful_num,color_size,
+                reviewer_name,task_id,asin) values ("{pp[0]}","{pp[1]}","{pp[2]}","{pp[3]}","{pp[4]}","{pp[5]}","{pp[
+                    6]}","{
+                pp[7]}",{task_id},"{asin}") '''
+                try:
+                    self.cursor.execute(sql)
+                except Exception:
+                    logger.error(sql)
+                    return
+            self.db.commit()
+        else:
+            for pp in data:
+                sql = f'''insert into {table} (ask_date,question,answer,answer_name,vote_num,task_id,asin) values ("{pp[
+                    0]}","{pp[1]}","{pp[2]}","{pp[3]}","{pp[4]}",{task_id},"{asin}") '''
+                try:
+                    self.cursor.execute(sql)
+                except Exception:
+                    logger.error(sql)
+                    return
+            self.db.commit()
+
     def start(self):
 
-        self.parse()
+        # 查询任务id和黑名单标记
+        tsk_data = self.get_task_id()
+        if not tsk_data:
+            return
+        task_id = tsk_data[0][0]
+        black_flag_id = tsk_data[0][1]
 
-    def save_data(self):
-        sql = f'''insert into  '''
-        pass
+        # 查询出黑名单列表
+        blc = self.get_black_List(black_flag_id)
+        black_asins = [k[0] for k in blc]
+
+        # 获取任务详情
+        task_info_datas = self.get_task_info(task_id)
+
+        # 任务解析成字典格式
+        self.parse_task_datas_to_dict(task_info_datas)
+        # 解析字典
+        self.parse_task_dict(task_id, black_flag_id)
+        # 清洗asin
+        asins = clear_other_list(self.all_asin, black_asins)
+        for asin in asins:
+            tmp_dict = listing_uk(asin)
+            self.save_data(tmp_dict, 'product_info', task_id, black_flag_id, asin)
 
     def __del__(self):
         self.cursor.close()

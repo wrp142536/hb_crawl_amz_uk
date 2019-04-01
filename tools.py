@@ -22,7 +22,7 @@ my_cookies = [
 def my_proxy():
     proxy_host = "proxy.crawlera.com"
     proxy_port = "8010"
-    proxy_auth = "<ddabf60de2564ab6a29bcc76a89eaafc>:"  # Make sure to include ':' at the end
+    proxy_auth = "ddabf60de2564ab6a29bcc76a89eaafc:"  # Make sure to include ':' at the end
     proxies = {"https": "https://{}@{}:{}/".format(proxy_auth, proxy_host, proxy_port),
                "http": "http://{}@{}:{}/".format(proxy_auth, proxy_host, proxy_port)}
     return proxies

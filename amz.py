@@ -46,11 +46,11 @@ def get_request(url):
     :return: html字符串
     """
     print('即将请求：', url)
-    headers = random_headers()
-    # proxies = my_proxy()
+    # headers = random_headers()
+    proxies = my_proxy()
     try:
-        # resp = requests.get(url=url, headers=headers, proxies=proxies, verify=False)
-        resp = requests.get(url=url, headers=headers,verify=False)
+        resp = requests.get(url=url,proxies=proxies, verify=False)
+        # resp = requests.get(url=url, headers=headers,verify=False)
         if is_robot(resp.text):
             result = parse_robot(resp.text)
         else:
@@ -261,7 +261,8 @@ def listing_uk(asin):
             is_ziying = re.findall(ziying[1], a)
             if len(is_ziying) > 0:
                 listing['是否自营'] = 1
-    return listing.items()
+
+    return listing
     # print(listing.items())
 
 

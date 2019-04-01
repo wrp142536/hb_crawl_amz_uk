@@ -1,7 +1,7 @@
 from amz import get_request
 import lxml.etree
 import re
-from tools import date_strft,return_list0_to_str
+from tools import date_strft, return_list0_to_str
 
 
 class Reveiews:
@@ -114,7 +114,7 @@ class Reveiews:
                 text = return_list0_to_str(text)
                 asin = return_list0_to_str(asin)
 
-                result.append((time, asin, title, text, star, helpful, size1, names))
+                result.append((asin, time,  title, text, star, helpful, size1, names))
 
         return result[:int(self.number)]
 
