@@ -1,7 +1,7 @@
 from amz import get_request
 import lxml.etree
 import re
-from tools import date_strft, return_list0_to_str
+from tools import date_strft, return_list0_to_str, replace_emoji
 
 
 class Reveiews:
@@ -14,35 +14,38 @@ class Reveiews:
     :param filter_by: 过滤选项
     """
 
-    def __init__(self, asin, number, sort='top rated', star='all', filter_by='all reviewers'):
+    def __init__(self, asin, number, sort, star, filter_by):
         self.asin = asin
         self.number = number
-        if sort == 'top rated':
-            self.sort = 'helpful'
-        elif sort == 'most recent':
-            self.sort = 'recent'
-
-        if filter_by == 'all reviewers':
-            self.filter_by = 'all_reviews'
-        elif filter_by == 'verified purchase only':
-            self.filter_by = 'avp_only_reviews'
-
-        if str(star) == '1':
-            self.star = 'one_star'
-        elif str(star) == '2':
-            self.star = 'two_star'
-        elif str(star) == '3':
-            self.star = 'three_star'
-        elif str(star) == '4':
-            self.star = 'four_star'
-        elif str(star) == '5':
-            self.star = 'five_star'
-        elif str(star) == 'all positive':
-            self.star = 'positive'
-        elif str(star) == 'all critical':
-            self.star = 'critical'
-        elif str(star) == 'all':
-            self.star = 'all_stars'
+        self.sort = sort
+        self.star = star
+        self.filter_by = filter_by
+        # if sort == 'top rated':
+        #     self.sort = 'helpful'
+        # elif sort == 'most recent':
+        #     self.sort = 'recent'
+        #
+        # if filter_by == 'all reviewers':
+        #     self.filter_by = 'all_reviews'
+        # elif filter_by == 'verified purchase only':
+        #     self.filter_by = 'avp_only_reviews'
+        #
+        # if str(star) == '1':
+        #     self.star = 'one_star'
+        # elif str(star) == '2':
+        #     self.star = 'two_star'
+        # elif str(star) == '3':
+        #     self.star = 'three_star'
+        # elif str(star) == '4':
+        #     self.star = 'four_star'
+        # elif str(star) == '5':
+        #     self.star = 'five_star'
+        # elif str(star) == 'all positive':
+        #     self.star = 'positive'
+        # elif str(star) == 'all critical':
+        #     self.star = 'critical'
+        # elif str(star) == 'all':
+        #     self.star = 'all_stars'
 
     def make_url(self, page):
         # TODO 根据数量选择1~n页,此函数返回最大页，需要修改
@@ -97,6 +100,8 @@ class Reveiews:
                         helpful = regx3.findall(numbers[0])
                         if len(helpful) > 0:
                             helpful = helpful[0].replace('One', '1')
+                    else:
+                        helpful = helpful[0]
                 else:
                     helpful = 0
 
@@ -110,11 +115,14 @@ class Reveiews:
                 else:
                     star = 0
                 names = return_list0_to_str(names)
+                names = replace_emoji(names)
                 title = return_list0_to_str(title)
+                title = replace_emoji(title)
                 text = return_list0_to_str(text)
+                text = replace_emoji(text)
                 asin = return_list0_to_str(asin)
 
-                result.append((asin, time,  title, text, star, helpful, size1, names))
+                result.append((asin, time, title, text, star, helpful, size1, names))
 
         return result[:int(self.number)]
 

@@ -19,6 +19,7 @@ my_cookies = [
     'amznacsleftnav-82426066-a164-33c3-8db7-5511782ee90f=1; session-token=yXrorBlVGcePuPSYjFRTSvaITZPAApd165NAC5U/TlH64tVKN8U6IxQ2vtW0dxzzqTCq5upD37nbEsdR7e/mbFw2Pb4tdHh1E2Bv3wUv5jkNo+X0GSNzezRg25ZK6x7RJZOhN5DhzGlxd5B2iC/r4X+sBB2VD3FYjcE/0YIXyZnxUcwmWfU1jwONrq7PLqB4;session-id-time=2082754801l; csm-hit=tb:s-6A2C32G7PH7ESM6TKC5E|1553223356860&t:1553223357476&adb:adblk_no',
 ]
 
+
 def my_proxy():
     proxy_host = "proxy.crawlera.com"
     proxy_port = "8010"
@@ -26,6 +27,7 @@ def my_proxy():
     proxies = {"https": "https://{}@{}:{}/".format(proxy_auth, proxy_host, proxy_port),
                "http": "http://{}@{}:{}/".format(proxy_auth, proxy_host, proxy_port)}
     return proxies
+
 
 def run_time(func):
     # 此装饰器，用来统计
@@ -199,3 +201,13 @@ class Singleton:
         if not hasattr(cls, '_instance'):
             cls._instance = object.__new__(cls)
         return cls._instance
+
+
+def replace_emoji(strs):
+    EMOJI0 = re.compile('\n|\r|\t')
+    EMOJI1 = re.compile(u'[\U00010000-\U0010ffff]')
+    EMOJI2 = re.compile(u'[\uD800-\uDBFF][\uDC00-\uDFFF]')
+    strs = EMOJI0.sub('', strs)
+    strs = EMOJI1.sub('', strs)
+    strs = EMOJI2.sub('', strs)
+    return strs

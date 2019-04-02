@@ -72,24 +72,27 @@ class Start_Task(GET_TASK):
         if self.kwargs.__contains__('key'):
             for k in self.kwargs['key']:
                 asins0 = asins_by_key(k[0], k[1])
-                self.all_asin.append(asins0)
+                logger.info(f'通过关键字得到asin：{asins0}')
+                self.all_asin = self.all_asin + asins0
         if self.kwargs.__contains__('bsr'):
             for j in self.kwargs['bsr']:
                 asins1 = secrch_by_bsr(j[0], j[1])
-                self.all_asin.append(asins1)
+                logger.info(f'通过bsr得到asin：{asins1}')
+                self.all_asin = self.all_asin + asins1
         if self.kwargs.__contains__('asin'):
-            self.all_asin.append(self.kwargs['asin'])
+            logger.info(f"手动添加asin：{self.kwargs['asin']}")
+            self.all_asin = self.all_asin + self.kwargs['asin']
 
         if self.kwargs.__contains__('qa'):
             reg_asin = re.compile('asin=(.*?)&')
             reg_QANum = re.compile('QANum=(.*?)&')
-            reg_sort = re.compile('sort=(.*?)&')
+            reg_sort = re.compile('sort=(.*)')
             for jj in self.kwargs['qa']:
-                jj = jj + '&'
+                logger.info(f'qa请求:{jj}')
                 asin = reg_asin.findall(jj)
                 QANum = reg_QANum.findall(jj)
                 sort = reg_sort.findall(jj)
-                qa = Q_and_A(asin[0], QANum[0], sort[0])
+                qa = Q_and_A(asin[0], QANum[0], method=sort[0])
                 qa_data = qa.parse()
                 for data in qa_data:
                     self.save_data(data, 'qa', task_id, black_flag_id, asin[0])
@@ -99,30 +102,18 @@ class Start_Task(GET_TASK):
             reviewsNum = re.compile('reviewsNum=(.*?)&')
             reg_sortBy = re.compile('sortBy=(.*?)&')
             reg_filterByStar = re.compile('filterByStar=(.*?)&')
-            reg_reviewerType = re.compile('reviewerType=(.*?)&')
+            reg_reviewerType = re.compile('reviewerType=(.*)')
             for jj in self.kwargs['review']:
-                jj = jj + '&'
+                logger.info(f'review请求:{jj}')
                 asin = reg_asin.findall(jj)
                 Num = reviewsNum.findall(jj)
                 sort = reg_sortBy.findall(jj)
                 star = reg_filterByStar.findall(jj)
                 filter_by = reg_reviewerType.findall(jj)
-
-                rv = Reveiews(asin[0], Num[0], sort[0], star[0], filter_by[0])
+                rv = Reveiews(asin[0], Num[0], sort=sort[0], star=star[0], filter_by=filter_by[0])
                 rv_data = rv.parse()
                 for data in rv_data:
                     self.save_data(data, 'review', task_id, black_flag_id, asin[0])
-
-    def listing(self):
-        if self.kwargs.__contains__('black_asin_list'):
-            asins = (i for item in self.all_asin for i in item if i not in self.kwargs['black_asin_list'])
-        else:
-            asins = (i for item in self.all_asin for i in item)
-        result = []
-        for asin in asins:
-            my_items = listing_uk(asin)
-            result.append(my_items)
-        return result
 
     def parse_task_datas_to_dict(self, datas):
         key = []
@@ -141,8 +132,6 @@ class Start_Task(GET_TASK):
                 qa.append(data[7])
             elif data[6] == 1:
                 review.append(data[7])
-            else:
-                print('任务有问题！')
         self.kwargs['key'] = key
         self.kwargs['bsr'] = bsr
         self.kwargs['asin'] = asin
@@ -154,37 +143,35 @@ class Start_Task(GET_TASK):
         if table == 'product_info':
             sql = f'''insert into {table} (run_time ,asin ,brand ,title ,price ,pic_url ,
             rev_num ,star ,is_amazon ,first_category,first_category_rank,date_first_available,
-            sellers_rank,task_id,black_flag_id ) values ('{run_time}','{data["asin"]}','{data["品牌"]}',
-            '{data["标题"]}','{data["价格"]}','{data["图片链接"]}','{data["评论数"]}','{data["星级"]}',
-            '{data["是否自营"]}','{data["大类名字"]}','{data["大类中排名"]}','{data["上架时间"]}',"{data['子类排名']}",
-            '{task_id}','{black_flag_id}');'''
+            sellers_rank,task_id,black_flag_id ) values ("{run_time}","{data['asin']}","{data['品牌']}",
+            "{data['标题']}","{data['价格']}","{data['图片链接']}","{data['评论数']}","{data['星级']}",
+            "{data['是否自营']}","{data['大类名字']}","{data['大类中排名']}","{data['上架时间']}","{data['子类排名']}",
+            {task_id},{black_flag_id});'''
             try:
                 self.cursor.execute(sql)
             except Exception:
                 logger.error(sql)
-                return
             self.db.commit()
         elif table == 'review':
-            for pp in data:
-                sql = f'''insert into {table} (product_asin,review_date,title,content,star,helpful_num,color_size,
-                reviewer_name,task_id,asin) values ("{pp[0]}","{pp[1]}","{pp[2]}","{pp[3]}","{pp[4]}","{pp[5]}","{pp[
-                    6]}","{
-                pp[7]}",{task_id},"{asin}") '''
-                try:
-                    self.cursor.execute(sql)
-                except Exception:
-                    logger.error(sql)
-                    return
+            pp = data
+
+            sql = f'''insert into {table} (product_asin,review_date,title,content,star,helpful_num,color_size,
+            reviewer_name,task_id,asin) values ("{pp[0]}","{pp[1]}","{pp[2]}","{pp[3]}","{pp[4]}","{pp[5]}","{pp[
+                6]}","{
+            pp[7]}",{task_id},"{asin}") '''
+            try:
+                self.cursor.execute(sql)
+            except Exception:
+                logger.error(sql)
             self.db.commit()
         else:
-            for pp in data:
-                sql = f'''insert into {table} (ask_date,question,answer,answer_name,vote_num,task_id,asin) values ("{pp[
-                    0]}","{pp[1]}","{pp[2]}","{pp[3]}","{pp[4]}",{task_id},"{asin}") '''
-                try:
-                    self.cursor.execute(sql)
-                except Exception:
-                    logger.error(sql)
-                    return
+            pp = data
+            sql = f'''insert into {table} (ask_date,question,answer,answer_name,vote_num,task_id,asin) values ("{pp[
+                0]}","{pp[1]}","{pp[2]}","{pp[3]}","{pp[4]}",{task_id},"{asin}") '''
+            try:
+                self.cursor.execute(sql)
+            except Exception:
+                logger.error(sql)
             self.db.commit()
 
     def start(self):
@@ -192,13 +179,16 @@ class Start_Task(GET_TASK):
         # 查询任务id和黑名单标记
         tsk_data = self.get_task_id()
         if not tsk_data:
+            logger.info('无任务')
             return
         task_id = tsk_data[0][0]
         black_flag_id = tsk_data[0][1]
-
-        # 查询出黑名单列表
-        blc = self.get_black_List(black_flag_id)
-        black_asins = [k[0] for k in blc]
+        if black_flag_id == 0:
+            black_asins = []
+        else:
+            # 查询出黑名单列表
+            blc = self.get_black_List(black_flag_id)
+            black_asins = [k[0] for k in blc]
 
         # 获取任务详情
         task_info_datas = self.get_task_info(task_id)
@@ -219,10 +209,6 @@ class Start_Task(GET_TASK):
 
 
 if __name__ == '__main__':
-    s = Start_Task(key=('water bottle', 1), bsr=('bsr_url', 10))
-    c = s.start()
-
-    print(c)
-    # asins_by_key('water bottle', 1)
-    # asins = secrch_by_bsr(bsr_url, 100)
-    # listing_uk('604079156X')
+    s = Start_Task()
+    s.start()
+    print('over!')

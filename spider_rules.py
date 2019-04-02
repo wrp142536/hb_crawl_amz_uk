@@ -51,9 +51,12 @@ class Listing_Rules:
                  ('xpath', '//td[@class="a-color-price a-size-medium a-align-bottom"]/text()'),
                  ('xpath', '//span[@class="a-size-medium a-color-price offer-price a-text-normal"]/text()'),
                  ('xpath', '//span[@id="color_name_1_price"]/span[@class="a-size-mini twisterSwatchPrice"]/text()'),
-                 (
-                     'xpath',
-                     '//button[@class="av-button av-button--default js-purchase-button dv-record-reftag"]/text()'),
+                 ('xpath', '//div[@id="unqualifiedBuyBox"]//span[@class="a-color-price"]/text()'),
+                 ('xpath', '//span[@id="priceblock_ourprice"]/text()'),
+                 ('xpath', '//span[@id="price_inside_buybox"]/text()'),
+                 ('xpath',
+                  '//button[@class="av-button av-button--default js-purchase-button dv-record-reftag"]/text()'),
+
                  ]
         return rules
 
@@ -92,6 +95,7 @@ class Listing_Rules:
                  ]
         return rules
 
+
 class SP_by_key:
 
     @staticmethod
@@ -101,6 +105,7 @@ class SP_by_key:
                  ('xpath_replace', "//div[contains(@id,'a-popover-sp-info-popover-')]/@id"),
                  ]
         return rules
+
 
 class Search_by_key:
 

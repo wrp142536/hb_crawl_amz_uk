@@ -7,6 +7,7 @@ from tools import *
 from mylog import My_log
 from spider_rules import *
 import urllib3
+
 urllib3.disable_warnings()
 
 lst = Listing_Rules()
@@ -14,6 +15,7 @@ sp_key = SP_by_key()
 rule_by_key = Search_by_key()
 
 logger = My_log('log.conf').get_logger('lyl')
+
 
 def parse_robot(html):
     """
@@ -49,16 +51,16 @@ def get_request(url):
     # headers = random_headers()
     proxies = my_proxy()
     try:
-        resp = requests.get(url=url,proxies=proxies, verify=False)
+        resp = requests.get(url=url, proxies=proxies, verify=False, timeout=120)
         # resp = requests.get(url=url, headers=headers,verify=False)
         if is_robot(resp.text):
             result = parse_robot(resp.text)
         else:
             result = resp.text
         return result
-    except Exception:
-        logger.error('请求失败：{})'.format(url))
-        return 'failed'
+    except Exception as e:
+        logger.error('请求失败：{},错误原因：{})'.format(url, e))
+        return get_request(url)
 
 
 def get_sell_time(asin, page):
@@ -104,7 +106,7 @@ def listing_uk(asin):
         '图片链接': '',
         '子类排名': '[]',
     }
-    logger.info(f'开始解析{asin}')
+    # logger.info(f'开始解析{asin}')
     # 根据asin解析出商品详情
     a = get_request("https://www.amazon.co.uk/dp/{}/?psc=1".format(asin))
 
@@ -182,20 +184,26 @@ def listing_uk(asin):
     for price in lst.rules_price():
         if price[0] == 're':
             price1 = re.findall(price[1], a)
+            if len(price1) > 0:
+                price_str = re_clear_str(price1[0])
+                listing['价格'] = price_str
+                break
 
         # elif price[0] == 'xpath':
         else:
             price1 = mytree.xpath(price[1])
-        if len(price1) > 0:
-            listing['价格'] = price1[0]
-            break
+            if len(price1) > 0:
+                price_str = re_clear_str(price1[0])
+                listing['价格'] = price_str
+                break
 
     # 品牌
     for pp in lst.rules_pinpai():
         if pp[0] == 're':
             pinpai = re.findall(pp[1], a)
             if len(pinpai) > 0:
-                listing['品牌'] = pinpai[0]
+                pinpai = re_clear_str(pinpai[0])
+                listing['品牌'] = pinpai
                 break
 
     # 标题
