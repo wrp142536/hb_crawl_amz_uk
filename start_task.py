@@ -1,5 +1,6 @@
 from tools import Singleton, clear_other_list
-from amz import asins_by_key, listing_uk, secrch_by_bsr, logger
+from amz import asins_by_key, listing_uk, secrch_by_bsr
+from mylog import logger
 from tools_mysql import Conn_Mysql
 import datetime
 from QA import Q_and_A

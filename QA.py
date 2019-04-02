@@ -3,6 +3,7 @@ import lxml.etree
 from tools import list_to_str
 import re
 from tools import date_strft, replace_emoji
+from mylog import logger
 
 
 class Q_and_A:
@@ -28,7 +29,11 @@ class Q_and_A:
         return url
 
     def get_data(self, page):
-        html = get_request(self.make_url(page))
+        url = self.make_url(page)
+        html = get_request(url)
+        if not html:
+            logger.error(f'请求{url}被拒绝')
+            return
         return html
 
     def parse(self):
@@ -37,6 +42,8 @@ class Q_and_A:
         regx = re.compile('asked on (.*)')
         for page in range(1, max_page + 1):
             html = self.get_data(page)
+            if not html:
+                continue
             mytree = lxml.etree.HTML(html)
             divs = mytree.xpath(
                 '//div[@class="a-section askTeaserQuestions"]/div[@class="a-fixed-left-grid a-spacing-base"]')
@@ -50,12 +57,15 @@ class Q_and_A:
                 href = div.xpath('.//div[@class="a-fixed-left-grid-col a-col-right"]/a/@href')
                 if len(href) > 0:
                     html_0 = get_request('https://www.amazon.co.uk' + href[0])
+                    if not html_0:
+                        logger.error(f'请求https://www.amazon.co.uk{href[0]}被拒绝')
+                        continue
                     # 提问者的发布日期
                     time = regx.findall(html_0)
                 else:
                     time = ''
                 q = list_to_str(q)
-                q=replace_emoji(q)
+                q = replace_emoji(q)
                 a = list_to_str(a)
                 a = replace_emoji(a)
 

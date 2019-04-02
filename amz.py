@@ -4,7 +4,7 @@ from urllib import parse
 import lxml.etree
 from tools_mysql import *
 from tools import *
-from mylog import My_log
+from mylog import logger
 from spider_rules import *
 import urllib3
 
@@ -13,8 +13,6 @@ urllib3.disable_warnings()
 lst = Listing_Rules()
 sp_key = SP_by_key()
 rule_by_key = Search_by_key()
-
-logger = My_log('log.conf').get_logger('lyl')
 
 
 def parse_robot(html):
@@ -41,6 +39,7 @@ def parse_robot(html):
     return aa.text
 
 
+@retry(3)
 def get_request(url):
     """
     对某个url进行get请求，
@@ -50,17 +49,16 @@ def get_request(url):
     print('即将请求：', url)
     # headers = random_headers()
     proxies = my_proxy()
-    try:
-        resp = requests.get(url=url, proxies=proxies, verify=False, timeout=120)
-        # resp = requests.get(url=url, headers=headers,verify=False)
-        if is_robot(resp.text):
-            result = parse_robot(resp.text)
-        else:
-            result = resp.text
-        return result
-    except Exception as e:
-        logger.error('请求失败：{},错误原因：{})'.format(url, e))
-        return get_request(url)
+    resp = requests.get(url=url, proxies=proxies, verify=False, timeout=120)
+    # resp = requests.get(url=url, headers=headers,verify=False)
+    # if is_robot(resp.text):
+    #     result = parse_robot(resp.text)
+    # else:
+    #     result = resp.text
+    return resp.text
+    #
+    # logger.error('请求失败：{},错误原因：{})'.format(url, e))
+    # return get_request(url)
 
 
 def get_sell_time(asin, page):
@@ -73,6 +71,9 @@ def get_sell_time(asin, page):
 
     url = 'https://www.amazon.co.uk/product-reviews/{}?sortBy=recent&pageNumber={}'.format(asin, page)
     resp = get_request(url)
+    if not resp:
+        logger.error(f'请求{url}被拒绝')
+        return
     mytree = lxml.etree.HTML(resp)
     time = mytree.xpath(
         '//div[@id="cm_cr-review_list"]//span[@class="a-size-base a-color-secondary review-date"]/text()')
@@ -108,10 +109,14 @@ def listing_uk(asin):
     }
     # logger.info(f'开始解析{asin}')
     # 根据asin解析出商品详情
-    a = get_request("https://www.amazon.co.uk/dp/{}/?psc=1".format(asin))
+    url = "https://www.amazon.co.uk/dp/{}/?psc=1".format(asin)
+    a = get_request(url)
+    if not a:
+        logger.error(f'请求{url}被拒绝')
+        return
 
-    if is_robot(a):
-        a = parse_robot(a)
+    # if is_robot(a):
+    #     a = parse_robot(a)
 
     mytree = lxml.etree.HTML(a)
 
@@ -278,6 +283,9 @@ def get_first_types():
     # 获取首次请求bsr的数据
     url = 'https://www.amazon.co.uk/gp/bestsellers'
     html_str = get_request(url)
+    if not html_str:
+        logger.error(f'请求{url}被拒绝')
+        return
     a = get_bsr_list(html_str)
     for i in a:
         write_into_mysql('bsr_uk', i, 1, 0)
@@ -320,6 +328,10 @@ def all_types(deep):
 
     for url in datas_select:
         html_str = get_request(url)
+        # TODO 请求失败需要处理，暂时处理为跳过本次请求
+        if not html_str:
+            logger.error(f'请求{url}被拒绝')
+            continue
         found_data = get_bsr_list(html_str)
 
         for data in found_data:
@@ -340,10 +352,13 @@ def secrch_by_bsr(url, number):
     """
     # 按照bsr采集asin
     html_str = get_request(url)
-    if is_robot(html_str):
-        logger.error(f'访问{url}需要验证码')
-        # TODO BUG here
-        html_str = parse_robot(html_str)
+    if not html_str:
+        logger.error(f'请求{url}被拒绝')
+        return
+    # if is_robot(html_str):
+    #     logger.error(f'访问{url}需要验证码')
+    #     # TODO BUG here
+    #     html_str = parse_robot(html_str)
     number = int(number)
     mytree = lxml.etree.HTML(html_str)
     aa = mytree.xpath('//ol[@id="zg-ordered-list"]//li//a[@class="a-link-normal"]//@href')
@@ -359,6 +374,9 @@ def secrch_by_bsr(url, number):
     if number > 50:
         url2 = url + '?pg=2'
         html_str2 = get_request(url2)
+        if not html_str2:
+            logger.error(f'请求{url}被拒绝')
+            return
         mytree2 = lxml.etree.HTML(html_str2)
         aa2 = mytree2.xpath('//ol[@id="zg-ordered-list"]//li//a//@href')
         for i in aa2:
@@ -393,6 +411,8 @@ def html_search_by_key(key, page):
     # 请求，构造url
     url = 'https://www.amazon.co.uk/s?k={}&page={}'.format(url_key, page)
     result = get_request(url)
+    if not result:
+        logger.error(f'请求{url}被拒绝')
     return result
 
 
@@ -405,8 +425,10 @@ def asins_by_key(key, page):
     :return: 返回asin列表(去掉广告后)
     """
     html = html_search_by_key(key, page)
-    if is_robot(html):
-        html = parse_robot(html)
+    if not html:
+        return
+        # if is_robot(html):
+    #     html = parse_robot(html)
 
     mytree = lxml.etree.HTML(html)
     # 通过xpath格式化，转为字符串

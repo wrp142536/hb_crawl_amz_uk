@@ -211,3 +211,24 @@ def replace_emoji(strs):
     strs = EMOJI1.sub('', strs)
     strs = EMOJI2.sub('', strs)
     return strs
+
+
+def retry(n):
+    """
+    此装饰器用来重试nci
+    :param n: int，重试次数
+    :return:
+    """
+
+    def times(func):
+        def wraps(*args, **kwargs):
+            for _ in range(n):
+                try:
+                    a = func(*args, **kwargs)
+                    return a
+                except Exception:
+                    pass
+
+        return wraps
+
+    return times

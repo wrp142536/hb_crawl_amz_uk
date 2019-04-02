@@ -2,6 +2,7 @@ from amz import get_request
 import lxml.etree
 import re
 from tools import date_strft, return_list0_to_str, replace_emoji
+from mylog import logger
 
 
 class Reveiews:
@@ -54,7 +55,10 @@ class Reveiews:
         return url
 
     def get_data(self, page):
-        html = get_request(self.make_url(page))
+        url = self.make_url(page)
+        html = get_request(url)
+        if not html:
+            logger.error(f'''请求{url}被拒绝''')
         return html
 
     def parse(self):
@@ -67,6 +71,8 @@ class Reveiews:
         regx3 = re.compile('(.*?) person')
         for page in range(1, max_page + 1):
             html = self.get_data(page)
+            if not html:
+                continue
             mytree = lxml.etree.HTML(html)
             ids = mytree.xpath('//div[@id="cm_cr-review_list"]/div[@data-hook="review"]/@id')
             # print(ids)
