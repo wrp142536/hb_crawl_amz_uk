@@ -6,6 +6,10 @@ import datetime
 from QA import Q_and_A
 from RV import Reveiews
 import re
+import threadpool
+
+
+# from multiprocessing.pool import ThreadPool  # 注意ThreadPool不在threading模块下
 
 
 class GET_TASK(Singleton):
@@ -175,6 +179,10 @@ class Start_Task(GET_TASK):
                 logger.error(sql)
             self.db.commit()
 
+    def callback_for_save_listing(self, *result):
+        # args[0].args[0] 是asin，来源于listing函数的输入参数，result[1]是listing函数的执行结果
+        self.save_data(result[1], 'product_info', self.task_id, self.black_flag_id, result[0].args[0])
+
     def start(self):
         logger.info('【爬虫程序启动】')
         # 查询任务id和黑名单标记
@@ -182,29 +190,37 @@ class Start_Task(GET_TASK):
         if not tsk_data:
             logger.info('未获取任务')
             return
-        task_id = tsk_data[0][0]
-        logger.info(f'开始执行任务，任务id为{task_id}')
-        black_flag_id = tsk_data[0][1]
-        if black_flag_id == 0:
+        self.task_id = tsk_data[0][0]
+        logger.info(f'开始执行任务，任务id为{self.task_id}')
+        self.black_flag_id = tsk_data[0][1]
+        if self.black_flag_id == 0:
             black_asins = []
         else:
             # 查询出黑名单列表
-            blc = self.get_black_List(black_flag_id)
+            blc = self.get_black_List(self.black_flag_id)
             black_asins = [k[0] for k in blc]
 
         # 获取任务详情
-        task_info_datas = self.get_task_info(task_id)
+        task_info_datas = self.get_task_info(self.task_id)
 
         # 任务解析成字典格式
         self.parse_task_datas_to_dict(task_info_datas)
         # 解析字典
-        self.parse_task_dict(task_id, black_flag_id)
+        self.parse_task_dict(self.task_id, self.black_flag_id)
         # 清洗asin,去掉黑名单里的asin
         asins = clear_other_list(self.all_asin, black_asins)
-        for asin in asins:
-            tmp_dict = listing_uk(asin)
-            self.save_data(tmp_dict, 'product_info', task_id, black_flag_id, asin)
-        self.change_task_status(task_id)
+        # 开一个10数量的线程池
+        pool = threadpool.ThreadPool(10)
+        # 创建任务
+        reques = threadpool.makeRequests(listing_uk, asins, callback=self.callback_for_save_listing)
+        # 添加所有任务
+        [pool.putRequest(req) for req in reques]
+        pool.wait()
+
+        # for asin in asins:
+        #     tmp_dict = listing_uk(asin)
+        #     self.save_data(tmp_dict, 'product_info', task_id, black_flag_id, asin)
+        self.change_task_status(self.task_id)
 
     def change_task_status(self, task_id):
         # 任务完成后把数据库任务状态设为已完成
