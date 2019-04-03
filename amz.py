@@ -1,4 +1,4 @@
-import re
+# import re
 import requests
 from urllib import parse
 import lxml.etree

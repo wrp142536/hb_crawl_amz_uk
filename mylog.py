@@ -48,4 +48,3 @@ class My_log(Singleton):
 
 
 logger = My_log().get_logger()
-print(id(logger),'mylog')

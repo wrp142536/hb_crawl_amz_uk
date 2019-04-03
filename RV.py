@@ -15,7 +15,7 @@ class Reveiews:
     :param filter_by: 过滤选项
     """
 
-    def __init__(self, asin, number, sort, star, filter_by):
+    def __init__(self, asin, number, sort='helpful', star='all_stars', filter_by='all_reviews'):
         self.asin = asin
         self.number = number
         self.sort = sort

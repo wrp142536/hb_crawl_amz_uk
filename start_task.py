@@ -176,13 +176,14 @@ class Start_Task(GET_TASK):
             self.db.commit()
 
     def start(self):
-
+        logger.info('【爬虫程序启动】')
         # 查询任务id和黑名单标记
         tsk_data = self.get_task_id()
         if not tsk_data:
-            logger.info('无任务')
+            logger.info('未获取任务')
             return
         task_id = tsk_data[0][0]
+        logger.info(f'开始执行任务，任务id为{task_id}')
         black_flag_id = tsk_data[0][1]
         if black_flag_id == 0:
             black_asins = []
@@ -198,11 +199,18 @@ class Start_Task(GET_TASK):
         self.parse_task_datas_to_dict(task_info_datas)
         # 解析字典
         self.parse_task_dict(task_id, black_flag_id)
-        # 清洗asin
+        # 清洗asin,去掉黑名单里的asin
         asins = clear_other_list(self.all_asin, black_asins)
         for asin in asins:
             tmp_dict = listing_uk(asin)
             self.save_data(tmp_dict, 'product_info', task_id, black_flag_id, asin)
+        self.change_task_status(task_id)
+
+    def change_task_status(self, task_id):
+        # 任务完成后把数据库任务状态设为已完成
+        sql = f'''update task set is_finished=1 where id={task_id}'''
+        self.cursor.execute(sql)
+        self.db.commit()
 
     def __del__(self):
         self.cursor.close()
