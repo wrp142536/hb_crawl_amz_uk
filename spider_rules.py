@@ -4,11 +4,13 @@ class Listing_Rules:
     # 标题
     @staticmethod
     def rules_title():
-        rules = [('re_S', '<span id="productTitle" class="a-size-large">(.*?)</span>?'),
-                 ('xpath', '//span[@id="btAsinTitle"]/text()'),
-                 ('xpath', '//h1[@data-automation-id="title"]/text()'),
-                 ('xpath', '//span[@id="productTitle"]/text()'),
-                 ]
+        rules = [
+            ('xpath', '//span[@id="btAsinTitle"]/text()'),
+            ('xpath', '//span[@id="productTitle"]/text()'),
+            ('xpath', '//h1[@data-automation-id="title"]/text()'),
+            ('re_S', '<span id="productTitle" class="a-size-large">(.*?)</span>?'),
+            ('xpath', '//div[@id="dmusicProductTitle_feature_div"]/h1/text()'),
+        ]
         return rules
 
     # 大类排名
@@ -31,8 +33,8 @@ class Listing_Rules:
     # 评论数量
     @staticmethod
     def rules_rev():
-        rules = [('re', '">([\d, ]+)customer reviews'),
-                 ('xpath', '//span[@id="acrCustomerReviewText"]//text()'),
+        rules = [('xpath', '//span[@id="acrCustomerReviewText"]//text()'),
+                 ('re', '">([\d, ]+)customer reviews'),
                  ]
         return rules
 
@@ -47,20 +49,24 @@ class Listing_Rules:
     # 价格
     @staticmethod
     def rules_price():
-        rules = [('re', 'class="a-size-medium a-color-price">(.*)</span>'),
-                 ('re', 'class="a-color-price a-text-bold">(.*)</span>'),
-                 ('xpath', '//td[@class="a-color-price a-size-medium a-align-bottom"]/text()'),
-                 ('xpath', '//span[@class="a-size-medium a-color-price offer-price a-text-normal"]/text()'),
-                 ('xpath', '//span[@id="color_name_1_price"]/span[@class="a-size-mini twisterSwatchPrice"]/text()'),
-                 ('xpath', '//div[@id="unqualifiedBuyBox"]//span[@class="a-color-price"]/text()'),
-                 ('xpath', '//span[@id="priceblock_ourprice"]/text()'),
-                 ('xpath', '//span[@id="price_inside_buybox"]/text()'),
-                 ('xpath',
-                  '//div[@id="buyNew_noncbb"]/span[@class="a-size-base a-color-price offer-price a-text-normal"]/text()'),
-                 ('xpath',
-                  '//button[@class="av-button av-button--default js-purchase-button dv-record-reftag"]/text()'),
+        rules = [
+            ('xpath', '//span[@id="priceblock_ourprice"]/text()'),
+            ('xpath', '//span[@id="price_inside_buybox"]/text()'),
+            ('xpath', '//span[@id="color_name_1_price"]/span[@class="a-size-mini twisterSwatchPrice"]/text()'),
+            ('xpath', '//div[@id="unqualifiedBuyBox"]//span[@class="a-color-price"]/text()'),
+            ('xpath',
+             '//div[@id="buyNew_noncbb"]/span[@class="a-size-base a-color-price offer-price a-text-normal"]/text()'),
+            ('xpath',
+             '//button[@class="av-button av-button--default js-purchase-button dv-record-reftag"]/text()'),
+            ('xpath', '//td[@class="a-color-price a-size-medium a-align-bottom"]/text()'),
+            ('xpath', '//span[@class="a-size-medium a-color-price offer-price a-text-normal"]/text()'),
+            ('re', 'class="a-size-medium a-color-price">(.*)</span>'),
+            ('re', 'class="a-color-price a-text-bold">(.*)</span>'),
+            ('xpath', '//span[@id="btAsinTitle"]/span/text()'),
+            ('xpath', '//span[@id="actualPriceValue"]/text()'),
 
-                 ]
+
+        ]
         return rules
 
     # 品牌
@@ -74,8 +80,8 @@ class Listing_Rules:
     # 上架时间
     @staticmethod
     def rules_sell_time():
-        rules = [('re', '<li><b> Date first available at Amazon.co.uk:</b> (.*)</li>'),
-                 ('xpath', '//tr[@class="date-first-available"]/td[@class="value"]/text()'),
+        rules = [('xpath', '//tr[@class="date-first-available"]/td[@class="value"]/text()'),
+                 ('re', '<li><b> Date first available at Amazon.co.uk:</b> (.*)</li>'),
                  ('re', '<td class="label">Date First Available</td>'),
                  ]
         return rules
@@ -88,6 +94,7 @@ class Listing_Rules:
                  ('xpath', '//div[@class="imgTagWrapper"]/img/@data-old-hires'),
                  ('xpath', '//div[@class="imgTagWrapper"]/img/@data-a-dynamic-image'),
                  ('xpath', '//div[@id="img-canvas"]/img/@data-a-dynamic-image'),
+                 ('xpath', '//img[@id="js-masrw-main-image"]/@src'),
                  ]
         return rules
 
@@ -115,7 +122,7 @@ class Search_by_key:
     @staticmethod
     def asin_by_key():
         rules = [('xpath', '//div[contains(@data-cel-widget,"search_result_")]/@data-asin'),
-                 ('xpath', '//div[@class="s-result-list sg-row"]//div/@data-asin'),
                  ('xpath', '//li[contains(@id,"result_")]//@data-asin'),
+                 ('xpath', '//div[@class="s-result-list sg-row"]//div/@data-asin'),
                  ]
         return rules

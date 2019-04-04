@@ -53,16 +53,17 @@ def get_request(url):
         # headers = random_headers()
         proxies = my_proxy()
         resp = requests.get(url=url, proxies=proxies, verify=False, timeout=120)
+        # print(resp.headers)
         # resp = requests.get(url=url, headers=headers,verify=False)
         # if is_robot(resp.text):
         #     result = parse_robot(resp.text)
         # else:
         #     result = resp.text
-        qq.put(0)
+        # qq.put(0)
         return resp.text
-        #
-        # logger.error('请求失败：{},错误原因：{})'.format(url, e))
-        # return get_request(url)
+    #
+    # logger.error('请求失败：{},错误原因：{})'.format(url, e))
+    # return get_request(url)
 
     else:
         time.sleep(3)
@@ -156,25 +157,32 @@ def listing_uk(asin):
             price1 = re.findall(price[1], a)
             if len(price1) > 0:
                 price_str = re_clear_str(price1[0])
-                listing['价格'] = price_str
-                break
+                if price_str.startswith('£'):
+                    listing['价格'] = price_str
+                    break
+                else:
+                    continue
         else:
             price1 = mytree.xpath(price[1])
             if len(price1) > 0:
                 price_str = re_clear_str(price1[0])
-                listing['价格'] = price_str
-                break
+                if price_str.startswith('£'):
+                    listing['价格'] = price_str
+                    break
+                else:
+                    continue
 
     # 以下是对结果的初步判断和处理
-    if listing['价格'] and not listing['价格'].startswith('£'):
-        logger.error(f'asin:【{asin}】,价格【{listing["价格"]}】有误')
-        listing['价格'] = ''
-
+    # if listing['价格'] and not listing['价格'].startswith('£'):
+    #     logger.error(f'asin:【{asin}】,价格【{listing["价格"]}】有误')
+    #     listing['价格'] = ''
     if listing['标题']:
         if not listing['品牌']:
             listing['品牌'] = listing['标题'].split(' ')[0]
-    elif not listing['价格']:
-        return
+    # if not listing['标题']  and not listing['价格']:
+    # elif not listing['价格']:
+    #     logger.error(f'【{asin}】没有标题，剔除！')
+    #     return
 
     # 排名情况
     for rank_rule in lst.rules_rank():
@@ -188,7 +196,8 @@ def listing_uk(asin):
         if len(ranks0) > 0:
             ranks = re.findall('(.*) in (.*)\(', ranks0)
             # 大类中排名
-            listing['大类中排名'] = ranks[0][0].replace(' ', '')
+            listing['大类中排名'] = re.sub(' |Free|,|#', '', ranks[0][0])
+            # listing['大类中排名'] = ranks[0][0].replace(' ', '').replace('Free', '').replace(',', '').replace('#', '')
             # 大类名称
             listing['大类名字'] = ranks[0][1]
             break
@@ -196,7 +205,7 @@ def listing_uk(asin):
         try:
             listing['大类中排名'] = int(listing['大类中排名'].replace(',', ''))
         except Exception:
-            logger.error(f"大类排名格式化错误{listing['大类中排名']}")
+            logger.error(f"【{asin}】大类排名格式化错误【{listing['大类中排名']}】")
 
     # 子类排名情况
     for child_rank in lst.rules_child_rank():
@@ -228,7 +237,7 @@ def listing_uk(asin):
         try:
             listing['评论数'] = int(listing['评论数'].replace(',', '').replace(' ', ''))
         except Exception:
-            logger.error(f'评论数格式化失败：{listing["评论数"]}')
+            logger.error(f'【{asin}】评论数格式化失败：{listing["评论数"]}')
 
     # 评分，星级
     for score in lst.rules_scores():
@@ -239,7 +248,7 @@ def listing_uk(asin):
                     listing['星级'] = float(tmp[0])
                     break
                 except Exception:
-                    logger.error(f'星级格式化失败{tmp[0]}')
+                    logger.error(f'【{asin}】星级格式化失败{tmp[0]}')
 
     # 上架时间（如果能找到发布的上架时间信息，如果没有，取评论时间-15天）
     for sell in lst.rules_sell_time():
@@ -270,7 +279,7 @@ def listing_uk(asin):
             # 格式化时间戳
             listing['上架时间'] = date_strft(listing['上架时间'])
         except Exception:
-            logger.error(f'上架时间格式化失败：{listing["上架时间"]}')
+            logger.error(f'【{asin}】上架时间格式化失败：{listing["上架时间"]}')
 
     # 图片url
     for pic in lst.rules_pic():
@@ -280,9 +289,9 @@ def listing_uk(asin):
                 listing['图片链接'] = pic_list[0]
                 break
             elif len(pic_list) > 0 and len(pic_list) > 0:
-                pics = re.findall('https://.*?.jpg', pic_list[0])
-                if len(pics) > 0:
-                    listing['图片链接'] = pics[0]
+                pics = re.findall('(https*://.+?(\.jpg|\.png|\.gif|\.jpeg|\.bmp))', pic_list[0])
+                if len(pics) > 0 and len(pic[0]) > 0:
+                    listing['图片链接'] = pics[0][0]
 
     # 自营
     for ziying in lst.rules_ziying():
@@ -494,7 +503,7 @@ if __name__ == '__main__':
     # print(len(asins))
 
     # print(asins)
-    a = listing_uk('B01K7N6SSM')
+    a = listing_uk('B07B3PK12M')
     print(a)
     # get_sell_time('B01E8ZKD3G', 2)
 

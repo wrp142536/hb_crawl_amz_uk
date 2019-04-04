@@ -5,22 +5,6 @@ import time
 import queue
 from threading import Thread
 
-my_user_agent = [
-    'Mozilla/5.0 (Android 2.2; Windows; U; Windows NT 6.1; en-US) AppleWebKit/533.19.4 (KHTML, like Gecko) Version/5.0.3 Safari/533.19.4',
-    'Mozilla/5.0 (Windows; U; Windows NT 6.1; fr-FR) AppleWebKit/533.20.25 (KHTML, like Gecko) Version/5.0.4 Safari/533.20.27',
-    'Mozilla/5.0 (Windows; U; Windows NT 5.1; it-IT) AppleWebKit/533.20.25 (KHTML, like Gecko) Version/5.0.3 Safari/533.19.4'
-]
-my_cookies = [
-    "i18n-prefs=GBP; csm-hit=tb:s-DZMMM35FERRSYRZ1R3X3|1552984518345&t:1552984520459&adb:adblk_no; x-wl-uid=1MES0+GPxfZPv1GTfhYF1YmszEGNW8sm6bxtcCfzOhaa1HKK2iVXn3TDicgK3rmdKqyOClYoxr+4=; session-token=nGyoPozQeylZUiAEvztSiKcJmR/oZjz3R7h1b8STqK0BRhpMWhAqE5y6CDBM0naOpBkqNXMdz2z27v5GnYoA/a02heS9Hf8mPG9Os87TiiNpxLAjJmiakLHwnTtdonbmy4aY50KAzVSCPGTOY5lgBqzJAn6epnoopKpDKDCfuOCW1s7TrFgrPGLBLax1gRA8DLWkb+cPhQ5WLrydT8OCCcCobM097QL6HG8paOzcUc69+5nPJf9YFr6G3KY18r2GixF3FcpqDic=; ubid-acbuk=260-7690648-0227832; session-id-time=2082758401l; session-id=259-4383301-1388542",
-
-    # "i18n-prefs=GBP; x-wl-uid=17Ix84B+2UkOgorAJhTKJO0oSAvPTCMT8ZHkUYvqAagUHZ+hg7mUsnVYGEsxBjpe9QzLNEJnxI4s=; csm-hit=tb:s-X4MR54GFD9KZHDRSFRER|1552984638059&t:1552984639891&adb:adblk_no; session-token=QDSNzohhP1fyBKKNcXK/yZoCI6wg9yOjdP1Rssm0ycXxKDyCGlzgk7u8Iiqdgs28cqHFMOK8vIimr8WzSqxbQQeFmH5+WvwpQdJmp1PJ+QrmUHECB1E/X3wPOpMmRFjT261I6OVMikZfuNGFWAMsbaRzEsaFt+km7D9ET3m4ORY2Hib6SLEMetSgfyqDDOOExBdManp6dsbnNDxyhYN0NyQ3zPNt1A1YEvhC+PIYZTpnBV4L0OVf++wWWLqU9MDmkokvn9ZVFYk=; ubid-acbuk=258-5213684-5618621; session-id-time=2082758401l; session-id=261-1644157-2686632",
-
-    # "i18n-prefs=GBP; x-wl-uid=1GHKdZPQrwzy2iMh52zdY2/41yh3bjOqd8EZd7L4cMneOULvN+NfONqTSEWoDj7UR3UExvTPA1f0=; session-token=u1KzWQDv6VRIxHuNayl5wJ7gZ4AOilf4kCVAeFaXDfAXVj4MFfTp9pawv01O3G+GVUS28SdFGtEs+vHWPFp4/yOO3ercfOQkQGcf7TlkwFJ+5RJI8I8L0P9idDt7mdqgxpljES32wPEHsvEYTJI/HRl3NFyZOmnpZMprxrSuRHG1H4W3RwYFE4J1x2z2lMk4G7EaBbW3XGJfqgBmZxZP8ROTS6EsJMaKQcZVQpwncWiAiV+/TUfyAidp0/NUMhagymxHP8doIFo=; csm-hit=tb:s-36JYJTVG6P0SG803BV2A|1552984790512&t:1552984793118&adb:adblk_no; ubid-acbuk=260-7679557-6766441; session-id-time=2082758401l; session-id=261-7817554-8498830",
-
-    # 'session-token="i2If0Kq9hyjxuNpCaf/XEfhb2+f66rI2QJK3AVU6bxLsf4+Yc63nvwjpdMs6YY2mFyslAYtc8jgiQXtqcq1sODwXB4J7Un5fpPdA1Unzni43bd5UeTTvGgD8Ox91aG6QMrwFB0thIZw8ux6O0kDH0Q3KBwtB+VQ95mAmlxdmbsGq3UCNza9Pznsk8wpd0SMyMsTkaqaMbsNFKFA/kC5vEA=="; amznacsleftnav-82426066-a164-33c3-8db7-5511782ee90f=1; csm-hit=tb:MZTSM3SKG7DJMTJA0TV4+s-MC5D1QRSXZ3Z866AFBTP|1552963666967&t:1552963666967&adb:adblk_no;',
-    'amznacsleftnav-82426066-a164-33c3-8db7-5511782ee90f=1; session-token=yXrorBlVGcePuPSYjFRTSvaITZPAApd165NAC5U/TlH64tVKN8U6IxQ2vtW0dxzzqTCq5upD37nbEsdR7e/mbFw2Pb4tdHh1E2Bv3wUv5jkNo+X0GSNzezRg25ZK6x7RJZOhN5DhzGlxd5B2iC/r4X+sBB2VD3FYjcE/0YIXyZnxUcwmWfU1jwONrq7PLqB4;session-id-time=2082754801l; csm-hit=tb:s-6A2C32G7PH7ESM6TKC5E|1553223356860&t:1553223357476&adb:adblk_no',
-]
-
 
 def my_proxy():
     proxy_host = "proxy.crawlera.com"
