@@ -73,9 +73,10 @@ class Start_Task(GET_TASK):
         # 获取所有的asin
         if self.kwargs.__contains__('key'):
             for k in self.kwargs['key']:
-                asins0 = asins_by_key(k[0], k[1])
-                logger.info(f'通过关键字得到asin：{asins0}')
-                self.all_asin = self.all_asin + asins0
+                for page in range(1, k[1] + 1):
+                    asins0 = asins_by_key(k[0], page)
+                    logger.info(f'通过关键字第{page}页得到asin：{asins0}')
+                    self.all_asin = self.all_asin + asins0
         if self.kwargs.__contains__('bsr'):
             for j in self.kwargs['bsr']:
                 asins1 = secrch_by_bsr(j[0], j[1])

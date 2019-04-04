@@ -92,18 +92,19 @@ def return_list0_to_str(list0):
 
 
 def date_strft(date_str):
-    date_str = date_str.replace(".", '').replace('Sept', 'Sep')
-    try:
-        dd = datetime.datetime.strptime(date_str, '%d %b %Y')
-    except Exception:
-        pass
     try:
         dd = datetime.datetime.strptime(date_str, '%d %B %Y')
+        cc = datetime.datetime.strftime(dd, '%Y/%m/%d')
+        return cc
     except Exception:
         pass
-    # 这里对dd不做处理，在外部调用时方便捕获异常
-    cc = datetime.datetime.strftime(dd, '%Y/%m/%d')
-    return cc
+    try:
+        date_str = date_str.replace(".", '').replace('Sept', 'Sep')
+        dd = datetime.datetime.strptime(date_str, '%d %b %Y')
+        cc = datetime.datetime.strftime(dd, '%Y/%m/%d')
+        return cc
+    except Exception:
+        pass
 
 
 def re_clear_str(args):

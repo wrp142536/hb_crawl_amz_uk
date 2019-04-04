@@ -92,7 +92,7 @@ def get_sell_time(asin, page):
         except ValueError:
             logger.error('asin:{}de 评论时间{}转换失败'.format(asin, time[-1]))
     else:
-        return 'null'
+        return
 
 
 def listing_uk(asin):
@@ -167,7 +167,9 @@ def listing_uk(asin):
 
     # 以下是对结果的初步判断和处理
     if listing['价格'] and not listing['价格'].startswith('£'):
-        logger.error(f'asin:{asin}价格可能有问题，请手动查看详情')
+        logger.error(f'asin:【{asin}】,价格【{listing["价格"]}】有误')
+        listing['价格'] = ''
+
     if listing['标题']:
         if not listing['品牌']:
             listing['品牌'] = listing['标题'].split(' ')[0]
@@ -259,6 +261,8 @@ def listing_uk(asin):
                 else:
                     page = (nums - 1) // 10 + 1
                 listing['上架时间'] = get_sell_time(asin, page)
+                if not listing['上架时间']:
+                    listing['上架时间'] = '1970/01/01'
             except Exception as e:
                 logger.error('asin:{}评论数转为页码失败,{}'.format(asin, e))
     else:
@@ -389,7 +393,7 @@ def secrch_by_bsr(url, number):
             logger.error(f'请求{url}被拒绝')
             return
         mytree2 = lxml.etree.HTML(html_str2)
-        aa2 = mytree2.xpath('//ol[@id="zg-ordered-list"]//li//a//@href')
+        aa2 = mytree2.xpath('//ol[@id="zg-ordered-list"]//li//a[@class="a-link-normal"]//@href')
         for i in aa2:
             tmp = regx.findall(i)
             if len(tmp) == 0:
@@ -471,7 +475,7 @@ def asins_by_key(key, page):
             if len(asin) > 0:
                 asin_result = asin
     result_asin = clear_other_list(asin_result, sp_asin)
-    logger.info(f'''关键字搜索{key}：总{len(asin_result)}个,广告共{len(sp_asin)}个,清洗后{len(result_asin)}个''', )
+    logger.info(f'''关键字搜索【{key}】,页码【{page}】：总{len(asin_result)}个,广告共{len(sp_asin)}个,清洗后{len(result_asin)}个''', )
     # print(f'总asin{len(asin_result)}个：', asin_result)
     # print(f'广告asin共{len(sp_asin)}个：：', sp_asin)
     # print(f'清洗后asin{len(result_asin)}个：:', result_asin)
@@ -490,7 +494,7 @@ if __name__ == '__main__':
     # print(len(asins))
 
     # print(asins)
-    a = listing_uk('B075HCXSYW')
+    a = listing_uk('B01K7N6SSM')
     print(a)
     # get_sell_time('B01E8ZKD3G', 2)
 

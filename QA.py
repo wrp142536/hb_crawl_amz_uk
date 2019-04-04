@@ -80,9 +80,8 @@ class Q_and_A:
                 name = replace_emoji(name)
                 time = list_to_str(time).replace('· ', '')
                 helpful = list_to_str(helpful)
-                try:
-                    time = date_strft(time)
-                except ValueError:
+                time = date_strft(time)
+                if not time:
                     time = '1970/01/01'
                 result.append((time, q, a, name, helpful))
         return result[:int(self.number)]
