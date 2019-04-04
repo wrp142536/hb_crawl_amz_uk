@@ -8,6 +8,8 @@ from mylog import logger
 from spider_rules import *
 import urllib3
 
+qq = my_queue()
+
 urllib3.disable_warnings()
 
 lst = Listing_Rules()
@@ -46,19 +48,25 @@ def get_request(url):
     :param url: url
     :return: html字符串
     """
-    print('即将请求：', url)
-    # headers = random_headers()
-    proxies = my_proxy()
-    resp = requests.get(url=url, proxies=proxies, verify=False, timeout=120)
-    # resp = requests.get(url=url, headers=headers,verify=False)
-    # if is_robot(resp.text):
-    #     result = parse_robot(resp.text)
-    # else:
-    #     result = resp.text
-    return resp.text
-    #
-    # logger.error('请求失败：{},错误原因：{})'.format(url, e))
-    # return get_request(url)
+    if not qq.full():
+        print('即将请求：', url)
+        # headers = random_headers()
+        proxies = my_proxy()
+        resp = requests.get(url=url, proxies=proxies, verify=False, timeout=120)
+        # resp = requests.get(url=url, headers=headers,verify=False)
+        # if is_robot(resp.text):
+        #     result = parse_robot(resp.text)
+        # else:
+        #     result = resp.text
+        qq.put(0)
+        return resp.text
+        #
+        # logger.error('请求失败：{},错误原因：{})'.format(url, e))
+        # return get_request(url)
+
+    else:
+        time.sleep(3)
+        get_request(url)
 
 
 def get_sell_time(asin, page):
@@ -119,6 +127,52 @@ def listing_uk(asin):
     #     a = parse_robot(a)
 
     mytree = lxml.etree.HTML(a)
+
+    # 品牌
+    for pp in lst.rules_pinpai():
+        if pp[0] == 're':
+            pinpai = re.findall(pp[1], a)
+            if len(pinpai) > 0:
+                pinpai = re_clear_str(pinpai[0])
+                listing['品牌'] = pinpai
+                break
+
+    # 标题
+    for title_rule in lst.rules_title():
+        if title_rule[0] == 're_S':
+            titles = re.findall(title_rule[1], a, re.S)
+        elif title_rule[0] == 'xpath':
+            titles = mytree.xpath(title_rule[1])
+        else:
+            titles = re.findall(title_rule[1], a)
+        if len(titles) > 0:
+            titles = re_clear_str(titles)
+            listing['标题'] = titles
+            break
+
+    # 价格
+    for price in lst.rules_price():
+        if price[0] == 're':
+            price1 = re.findall(price[1], a)
+            if len(price1) > 0:
+                price_str = re_clear_str(price1[0])
+                listing['价格'] = price_str
+                break
+        else:
+            price1 = mytree.xpath(price[1])
+            if len(price1) > 0:
+                price_str = re_clear_str(price1[0])
+                listing['价格'] = price_str
+                break
+
+    # 以下是对结果的初步判断和处理
+    if listing['价格'] and not listing['价格'].startswith('£'):
+        logger.error(f'asin:{asin}价格可能有问题，请手动查看详情')
+    if listing['标题']:
+        if not listing['品牌']:
+            listing['品牌'] = listing['标题'].split(' ')[0]
+    elif not listing['价格']:
+        return
 
     # 排名情况
     for rank_rule in lst.rules_rank():
@@ -185,52 +239,10 @@ def listing_uk(asin):
                 except Exception:
                     logger.error(f'星级格式化失败{tmp[0]}')
 
-    # 价格
-    for price in lst.rules_price():
-        if price[0] == 're':
-            price1 = re.findall(price[1], a)
-            if len(price1) > 0:
-                price_str = re_clear_str(price1[0])
-                listing['价格'] = price_str
-                break
-
-        # elif price[0] == 'xpath':
-        else:
-            price1 = mytree.xpath(price[1])
-            if len(price1) > 0:
-                price_str = re_clear_str(price1[0])
-                listing['价格'] = price_str
-                break
-
-    # 品牌
-    for pp in lst.rules_pinpai():
-        if pp[0] == 're':
-            pinpai = re.findall(pp[1], a)
-            if len(pinpai) > 0:
-                pinpai = re_clear_str(pinpai[0])
-                listing['品牌'] = pinpai
-                break
-
-    # 标题
-    for title_rule in lst.rules_title():
-        if title_rule[0] == 're_S':
-            titles = re.findall(title_rule[1], a, re.S)
-            titles = re_clear_str(titles)
-        elif title_rule[0] == 'xpath':
-            titles = mytree.xpath(title_rule[1])
-        else:
-            titles = re.findall(title_rule[1], a)
-            titles = re_clear_str(titles)
-
-        if len(titles) > 0:
-            listing['标题'] = titles
-            break
-
     # 上架时间（如果能找到发布的上架时间信息，如果没有，取评论时间-15天）
     for sell in lst.rules_sell_time():
         if sell[0] == 'xpath':
             sell_time = mytree.xpath(sell[1])
-        # elif sell[0] == 're':
         else:
             sell_time = re.findall(sell[1], a)
         if len(sell_time) > 0:
@@ -276,7 +288,6 @@ def listing_uk(asin):
                 listing['是否自营'] = 1
 
     return listing
-    # print(listing.items())
 
 
 def get_first_types():
@@ -460,7 +471,7 @@ def asins_by_key(key, page):
             if len(asin) > 0:
                 asin_result = asin
     result_asin = clear_other_list(asin_result, sp_asin)
-    logger.info(f'关键字搜索{key}：总{len(asin_result)}个,广告共{len(sp_asin)}个,清洗后{len(result_asin)}个', )
+    logger.info(f'''关键字搜索{key}：总{len(asin_result)}个,广告共{len(sp_asin)}个,清洗后{len(result_asin)}个''', )
     # print(f'总asin{len(asin_result)}个：', asin_result)
     # print(f'广告asin共{len(sp_asin)}个：：', sp_asin)
     # print(f'清洗后asin{len(result_asin)}个：:', result_asin)
@@ -479,7 +490,7 @@ if __name__ == '__main__':
     # print(len(asins))
 
     # print(asins)
-    a = listing_uk('0345520106')
+    a = listing_uk('B075HCXSYW')
     print(a)
     # get_sell_time('B01E8ZKD3G', 2)
 

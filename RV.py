@@ -124,8 +124,11 @@ class Reveiews:
                 names = replace_emoji(names)
                 title = return_list0_to_str(title)
                 title = replace_emoji(title)
+                title = title.replace('"', "'")
+
                 text = return_list0_to_str(text)
                 text = replace_emoji(text)
+                text = text.replace('"', "'")
                 asin = return_list0_to_str(asin)
 
                 result.append((asin, time, title, text, star, helpful, size1, names))

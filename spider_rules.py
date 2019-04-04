@@ -7,6 +7,7 @@ class Listing_Rules:
         rules = [('re_S', '<span id="productTitle" class="a-size-large">(.*?)</span>?'),
                  ('xpath', '//span[@id="btAsinTitle"]/text()'),
                  ('xpath', '//h1[@data-automation-id="title"]/text()'),
+                 ('xpath', '//span[@id="productTitle"]/text()'),
                  ]
         return rules
 
@@ -54,6 +55,8 @@ class Listing_Rules:
                  ('xpath', '//div[@id="unqualifiedBuyBox"]//span[@class="a-color-price"]/text()'),
                  ('xpath', '//span[@id="priceblock_ourprice"]/text()'),
                  ('xpath', '//span[@id="price_inside_buybox"]/text()'),
+                 ('xpath',
+                  '//div[@id="buyNew_noncbb"]/span[@class="a-size-base a-color-price offer-price a-text-normal"]/text()'),
                  ('xpath',
                   '//button[@class="av-button av-button--default js-purchase-button dv-record-reftag"]/text()'),
 

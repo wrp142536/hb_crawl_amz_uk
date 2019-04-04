@@ -25,9 +25,9 @@ class My_log(Singleton):
 
             # 创建两个handler
             info_handler = logging.handlers.TimedRotatingFileHandler(self.info_name, when='midnight', interval=7,
-                                                                     backupCount=7)
+                                                                     backupCount=7, encoding='utf-8')
             error_handler = logging.handlers.TimedRotatingFileHandler(self.error_name, when='midnight', interval=7,
-                                                                      backupCount=7)
+                                                                      backupCount=7, encoding='utf-8')
 
             # 设置日志等级
             error_handler.setLevel(logging.ERROR)

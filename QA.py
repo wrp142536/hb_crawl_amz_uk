@@ -66,6 +66,7 @@ class Q_and_A:
                     time = ''
                 q = list_to_str(q)
                 q = replace_emoji(q)
+                q = q.replace('"', "'")
                 a = list_to_str(a)
                 a = replace_emoji(a)
 
@@ -74,6 +75,7 @@ class Q_and_A:
                     a = div.xpath(
                         './/div[@class="a-fixed-left-grid-col a-col-right"]//span[@class="askLongText"]/text()')
                     a = list_to_str(a)
+                    a = a.replace('"', "'")
                 name = list_to_str(name)
                 name = replace_emoji(name)
                 time = list_to_str(time).replace('· ', '')

@@ -1,5 +1,5 @@
 from tools import Singleton, clear_other_list
-from amz import asins_by_key, listing_uk, secrch_by_bsr
+from amz import asins_by_key, listing_uk, secrch_by_bsr, qq
 from mylog import logger
 from tools_mysql import Conn_Mysql
 import datetime
@@ -7,9 +7,6 @@ from QA import Q_and_A
 from RV import Reveiews
 import re
 import threadpool
-
-
-# from multiprocessing.pool import ThreadPool  # 注意ThreadPool不在threading模块下
 
 
 class GET_TASK(Singleton):
@@ -54,7 +51,7 @@ class Start_Task(GET_TASK):
     # key=[('water bottle',page),('water bottle',page)....]
     # bsr=[('bsr_url',number),('bsr_url',number).....]
     # asin=[asin，asin1]
-    # black_asin_list=['','','',]
+
     db = Conn_Mysql().conn()
     cursor = db.cursor()
 
@@ -181,10 +178,13 @@ class Start_Task(GET_TASK):
 
     def callback_for_save_listing(self, *result):
         # args[0].args[0] 是asin，来源于listing函数的输入参数，result[1]是listing函数的执行结果
-        self.save_data(result[1], 'product_info', self.task_id, self.black_flag_id, result[0].args[0])
+        if result[1]:
+            self.save_data(result[1], 'product_info', self.task_id, self.black_flag_id, result[0].args[0])
+        else:
+            logger.error(f'商品详情页未抓到数据，asin：{result[0].args[0]}')
 
     def start(self):
-        logger.info('【爬虫程序启动】')
+        logger.info('【----------爬虫任务启动------------】')
         # 查询任务id和黑名单标记
         tsk_data = self.get_task_id()
         if not tsk_data:
@@ -199,7 +199,7 @@ class Start_Task(GET_TASK):
             # 查询出黑名单列表
             blc = self.get_black_List(self.black_flag_id)
             black_asins = [k[0] for k in blc]
-
+        logger.info(f'''黑名单asin{black_asins}''')
         # 获取任务详情
         task_info_datas = self.get_task_info(self.task_id)
 
@@ -209,6 +209,7 @@ class Start_Task(GET_TASK):
         self.parse_task_dict(self.task_id, self.black_flag_id)
         # 清洗asin,去掉黑名单里的asin
         asins = clear_other_list(self.all_asin, black_asins)
+
         # 开一个10数量的线程池
         pool = threadpool.ThreadPool(10)
         # 创建任务
@@ -221,6 +222,9 @@ class Start_Task(GET_TASK):
         #     tmp_dict = listing_uk(asin)
         #     self.save_data(tmp_dict, 'product_info', task_id, black_flag_id, asin)
         self.change_task_status(self.task_id)
+        logger.info('【------------爬虫任务结束------------】')
+        # 向队列发送退出命令
+        qq.put('exit')
 
     def change_task_status(self, task_id):
         # 任务完成后把数据库任务状态设为已完成

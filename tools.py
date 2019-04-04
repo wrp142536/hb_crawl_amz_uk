@@ -2,6 +2,8 @@ import random
 import datetime
 import re
 import time
+import queue
+from threading import Thread
 
 my_user_agent = [
     'Mozilla/5.0 (Android 2.2; Windows; U; Windows NT 6.1; en-US) AppleWebKit/533.19.4 (KHTML, like Gecko) Version/5.0.3 Safari/533.19.4',
@@ -90,7 +92,7 @@ def return_list0_to_str(list0):
 
 
 def date_strft(date_str):
-    date_str = date_str.replace(".", '')
+    date_str = date_str.replace(".", '').replace('Sept', 'Sep')
     try:
         dd = datetime.datetime.strptime(date_str, '%d %b %Y')
     except Exception:
@@ -232,3 +234,20 @@ def retry(n):
         return wraps
 
     return times
+
+
+def my_queue():
+    qq = queue.Queue(maxsize=25)
+
+    thred = Thread(target=queue_get, args=(qq,))
+    thred.start()
+    return qq
+
+
+def queue_get(qq):
+    while True:
+        if not qq.empty():
+            tmp = qq.get()
+            if tmp == 'exit':
+                break
+            time.sleep(3)
