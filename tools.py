@@ -212,7 +212,10 @@ def retry(n):
             for _ in range(n):
                 try:
                     a = func(*args, **kwargs)
-                    return a
+                    if a:
+                        return a
+                    else:
+                        continue
                 except Exception:
                     pass
 
@@ -222,7 +225,7 @@ def retry(n):
 
 
 def my_queue():
-    qq = queue.Queue(maxsize=25)
+    qq = queue.Queue(maxsize=10)
 
     thred = Thread(target=queue_get, args=(qq,))
     thred.start()
@@ -235,4 +238,4 @@ def queue_get(qq):
             tmp = qq.get()
             if tmp == 'exit':
                 break
-            time.sleep(3)
+            time.sleep(1.5)

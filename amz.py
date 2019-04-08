@@ -66,7 +66,7 @@ def get_request(url):
     # return get_request(url)
 
     else:
-        time.sleep(3)
+        time.sleep(1.5)
         get_request(url)
 
 
@@ -282,16 +282,17 @@ def listing_uk(asin):
             logger.error(f'【{asin}】上架时间格式化失败：{listing["上架时间"]}')
 
     # 图片url
+    regx_pic = re.compile('(https*://.+?(\.jpg|\.png|\.gif|\.jpeg|\.bmp))')
     for pic in lst.rules_pic():
         if pic[0] == 'xpath':
             pic_list = mytree.xpath(pic[1])
-            if len(pic_list) > 0 and len(pic_list[0]) < 100 and len(pic_list[0]) > 0:
-                listing['图片链接'] = pic_list[0]
-                break
-            elif len(pic_list) > 0 and len(pic_list) > 0:
-                pics = re.findall('(https*://.+?(\.jpg|\.png|\.gif|\.jpeg|\.bmp))', pic_list[0])
-                if len(pics) > 0 and len(pic[0]) > 0:
-                    listing['图片链接'] = pics[0][0]
+            if len(pic_list) > 0:
+                if len(pic_list[0]) < 100 and len(pic_list[0]) > 0:
+                    pic_str = list_to_str(pic_list[0])
+                    pics = regx_pic.findall(pic_str)
+                    if len(pics) > 0 and len(pic[0]) > 0:
+                        listing['图片链接'] = pics[0][0]
+                        break
 
     # 自营
     for ziying in lst.rules_ziying():
@@ -503,7 +504,7 @@ if __name__ == '__main__':
     # print(len(asins))
 
     # print(asins)
-    a = listing_uk('B07B3PK12M')
+    a = listing_uk('B07J9X469H')
     print(a)
     # get_sell_time('B01E8ZKD3G', 2)
 
