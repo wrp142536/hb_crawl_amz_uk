@@ -99,16 +99,18 @@ def re_clear_str(args):
     """
     if isinstance(args, list):
         strs = ''.join(args)
-    elif isinstance(args, str):
-        strs = args
     else:
-        print('re_clear_str函数传入参数格式不对')
+        strs = args
 
     # 换行符剔除
     tmp = re.sub('\n|\r|\t|\f', '', strs)
     tmp = re.sub('\xa0', ' ', tmp)
+
     # 剔除首尾空格
     tmp = tmp.strip()
+
+    # 把字符串中的引号添加转义，否则sql语句无法拼接
+    tmp = re.sub('"|\'', "\\'", tmp)
     return tmp
 
 
@@ -212,10 +214,7 @@ def retry(n):
             for _ in range(n):
                 try:
                     a = func(*args, **kwargs)
-                    if a:
-                        return a
-                    else:
-                        continue
+                    return a
                 except Exception:
                     pass
 

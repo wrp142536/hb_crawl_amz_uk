@@ -58,7 +58,7 @@ class Reveiews:
         url = self.make_url(page)
         html = get_request(url)
         if not html:
-            logger.error(f'''请求{url}被拒绝''')
+            logger.error(f'''请求【{url}】被拒绝''')
         return html
 
     def parse(self):

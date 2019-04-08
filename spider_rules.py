@@ -93,6 +93,7 @@ class Listing_Rules:
                  ('xpath', '//div[@class="av-fallback-packshot"]/img/@src'),
                  ('xpath', '//div[@class="imgTagWrapper"]/img/@data-old-hires'),
                  ('xpath', '//div[@class="imgTagWrapper"]/img/@data-a-dynamic-image'),
+                 ('xpath', '//div[@id="imgTagWrapperId"]/img/@data-a-dynamic-image'),
                  ('xpath', '//div[@id="img-canvas"]/img/@data-a-dynamic-image'),
                  ('xpath', '//img[@id="js-masrw-main-image"]/@src'),
                  ]

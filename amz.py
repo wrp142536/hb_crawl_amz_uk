@@ -49,10 +49,11 @@ def get_request(url):
     :return: html字符串
     """
     if not qq.full():
-        logger.warning(f'''请求：{url}''')
         # headers = random_headers()
         proxies = my_proxy()
         resp = requests.get(url=url, proxies=proxies, verify=False, timeout=120)
+        html = resp.text
+        logger.warning(f'''请求：【{url}】,返回大小{len(html)}字节''')
         # print(resp.headers)
         # resp = requests.get(url=url, headers=headers,verify=False)
         # if is_robot(resp.text):
@@ -60,7 +61,7 @@ def get_request(url):
         # else:
         #     result = resp.text
         # qq.put(0)
-        return resp.text
+        return html
     #
     # logger.error('请求失败：{},错误原因：{})'.format(url, e))
     # return get_request(url)
@@ -81,7 +82,7 @@ def get_sell_time(asin, page):
     url = 'https://www.amazon.co.uk/product-reviews/{}?sortBy=recent&pageNumber={}'.format(asin, page)
     resp = get_request(url)
     if not resp:
-        logger.error(f'请求{url}被拒绝')
+        logger.error(f'请求【{url}】被拒绝')
         return
     mytree = lxml.etree.HTML(resp)
     time = mytree.xpath(
@@ -120,8 +121,9 @@ def listing_uk(asin):
     # 根据asin解析出商品详情
     url = "https://www.amazon.co.uk/dp/{}/?psc=1".format(asin)
     a = get_request(url)
+
     if not a:
-        logger.error(f'请求{url}被拒绝')
+        logger.error(f'请求【{url}】无返回数据')
         return
 
     # if is_robot(a):
@@ -287,7 +289,7 @@ def listing_uk(asin):
         if pic[0] == 'xpath':
             pic_list = mytree.xpath(pic[1])
             if len(pic_list) > 0:
-                if len(pic_list[0]) < 100 and len(pic_list[0]) > 0:
+                if len(pic_list[0]) > 0 and not pic_list[0].startswith('data:'):
                     pic_str = list_to_str(pic_list[0])
                     pics = regx_pic.findall(pic_str)
                     if len(pics) > 0 and len(pic[0]) > 0:
@@ -504,7 +506,7 @@ if __name__ == '__main__':
     # print(len(asins))
 
     # print(asins)
-    a = listing_uk('B07J9X469H')
+    a = listing_uk('B072LZZ1H1')
     print(a)
     # get_sell_time('B01E8ZKD3G', 2)
 

@@ -24,6 +24,7 @@ class My_log(Singleton):
 
             # 格式化输出
             formatter = logging.Formatter("%(asctime)s - %(filename)s - %(funcName)s - %(message)s", "%Y%m%d %H:%M:%S")
+            formatter01 = logging.Formatter("%(asctime)s - %(message)s", "%Y%m%d %H:%M:%S")
 
             # 创建两个handler
             info_handler = logging.handlers.TimedRotatingFileHandler(self.info_name, when='midnight', interval=7,
@@ -46,7 +47,7 @@ class My_log(Singleton):
             # 格式化输出应用给handlers
             info_handler.setFormatter(formatter)
             error_handler.setFormatter(formatter)
-            warning_handler.setFormatter(formatter)
+            warning_handler.setFormatter(formatter01)
 
             # 添加过滤器，过滤掉info中等级小于warning的
             info_filter = logging.Filter()

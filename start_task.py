@@ -160,8 +160,7 @@ class Start_Task(GET_TASK):
 
             sql = f'''insert into {table} (product_asin,review_date,title,content,star,helpful_num,color_size,
             reviewer_name,task_id,asin) values ("{pp[0]}","{pp[1]}","{pp[2]}","{pp[3]}","{pp[4]}","{pp[5]}","{pp[
-                6]}","{
-            pp[7]}",{task_id},"{asin}") '''
+                6]}","{pp[7]}",{task_id},"{asin}") '''
             try:
                 self.cursor.execute(sql)
             except Exception:
@@ -210,6 +209,7 @@ class Start_Task(GET_TASK):
         self.parse_task_dict(self.task_id, self.black_flag_id)
         # 清洗asin,去掉黑名单里的asin
         asins = clear_other_list(self.all_asin, black_asins)
+        logger.info(f'共需要解析【{len(asins)}】个asin')
 
         # 开一个10数量的线程池
         pool = threadpool.ThreadPool(10)
@@ -223,7 +223,7 @@ class Start_Task(GET_TASK):
         #     tmp_dict = listing_uk(asin)
         #     self.save_data(tmp_dict, 'product_info', task_id, black_flag_id, asin)
         self.change_task_status(self.task_id)
-        logger.info('【------------爬虫任务结束------------】')
+        logger.info('【------------爬虫任务结束------------】\n\n')
         # 向队列发送退出命令
         qq.put('exit')
 
