@@ -41,7 +41,7 @@ def parse_robot(html):
     return aa.text
 
 
-@retry(3)
+@retry(5)
 def get_request(url):
     """
     对某个url进行get请求，
@@ -49,7 +49,7 @@ def get_request(url):
     :return: html字符串
     """
     if not qq.full():
-        print('即将请求：', url)
+        logger.warning(f'''请求：{url}''')
         # headers = random_headers()
         proxies = my_proxy()
         resp = requests.get(url=url, proxies=proxies, verify=False, timeout=120)
