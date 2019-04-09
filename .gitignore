@@ -5,7 +5,6 @@
 __pycache__/*
 *.bak
 *.xlsx
-*.txt
 *.mat
 *.spec
 *.exe
