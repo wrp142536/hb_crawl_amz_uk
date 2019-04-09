@@ -17,4 +17,5 @@ old/*
 test*.py
 *.out
 AmazonCaptcha-master/*
+amz_uk_env/*
 

@@ -16,12 +16,14 @@ def my_proxy():
 
 
 def run_time(func):
-    # 此装饰器，用来统计
+    # 此装饰器，用来调试
     def warps(*args, **kwargs):
         start_time = time.time()
+        print('进入', func.__name__)
         aa = func(*args, **kwargs)
+        print(func.__name__, '耗时', time.time() - start_time)
+        print('离开', func.__name__)
 
-        print(time.time() - start_time)
         return aa
 
     return warps
