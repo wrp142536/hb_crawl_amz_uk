@@ -32,12 +32,15 @@ class My_log(Singleton):
             error_handler = logging.handlers.TimedRotatingFileHandler(self.error_name, when='midnight', interval=7,
                                                                       backupCount=7, encoding='utf-8')
             warning_handler = logging.handlers.TimedRotatingFileHandler(self.warning_name, when='midnight', interval=7,
-                                                                      backupCount=7, encoding='utf-8')
+                                                                        backupCount=7, encoding='utf-8')
 
+            info_handler.namer = lambda x: x.replace(".log", '_')
+            error_handler.namer = lambda x: x.replace(".log", '_')
+            warning_handler.namer = lambda x: x.replace(".log", '_')
             # 设置日志切割后的名字后缀
-            info_handler.suffix = "%Y%m%d-%H%M.log"
-            error_handler.suffix = "%Y%m%d-%H%M.log"
-            warning_handler.suffix = "%Y%m%d-%H%M.log"
+            info_handler.suffix = "%Y%m%d.log"
+            error_handler.suffix = "%Y%m%d.log"
+            warning_handler.suffix = "%Y%m%d.log"
 
             # 设置日志等级
             error_handler.setLevel(logging.ERROR)

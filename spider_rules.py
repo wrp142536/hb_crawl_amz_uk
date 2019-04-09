@@ -8,6 +8,7 @@ class Listing_Rules:
             ('xpath', '//span[@id="btAsinTitle"]/text()'),
             ('xpath', '//span[@id="productTitle"]/text()'),
             ('xpath', '//h1[@data-automation-id="title"]/text()'),
+            ('xpath', '//h1[@id="title"]//text()'),
             ('re_S', '<span id="productTitle" class="a-size-large">(.*?)</span>?'),
             ('xpath', '//div[@id="dmusicProductTitle_feature_div"]/h1/text()'),
         ]
@@ -64,7 +65,6 @@ class Listing_Rules:
             ('re', 'class="a-color-price a-text-bold">(.*)</span>'),
             ('xpath', '//span[@id="btAsinTitle"]/span/text()'),
             ('xpath', '//span[@id="actualPriceValue"]/text()'),
-
 
         ]
         return rules

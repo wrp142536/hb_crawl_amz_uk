@@ -39,23 +39,23 @@ def base_64_pic():
         f.write(c)
 
 
-def random_headers():
-    """
-    制造随机请求头，减少爬虫被封几率，此请求头针对amazon
-    :return: 请求头字典
-    """
-    headers = {
-        # 'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        # 'accept-encoding': 'gzip, deflate, br',
-        # 'accept-language': 'zh-CN,zh;q=0.8',
-        # 'cache-control': 'max-age=0',
-        # 'cookie': '%s' % random.choice(my_cookies),
-        # 'upgrade-insecure-requests': '1',
-        'user-agent': '%s' % random.choice(my_user_agent),
-        # 'user-agent':,
-
-    }
-    return headers
+# def random_headers():
+#     """
+#     制造随机请求头，减少爬虫被封几率，此请求头针对amazon
+#     :return: 请求头字典
+#     """
+#     headers = {
+#         # 'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+#         # 'accept-encoding': 'gzip, deflate, br',
+#         # 'accept-language': 'zh-CN,zh;q=0.8',
+#         # 'cache-control': 'max-age=0',
+#         # 'cookie': '%s' % random.choice(my_cookies),
+#         # 'upgrade-insecure-requests': '1',
+#         'user-agent': '%s' % random.choice(my_user_agent),
+#         # 'user-agent':,
+#
+#     }
+#     return headers
 
 
 def before15_days(strs):
@@ -106,7 +106,7 @@ def re_clear_str(args):
 
     # 换行符剔除
     tmp = re.sub('\n|\r|\t|\f', '', strs)
-    tmp = re.sub('\xa0', ' ', tmp)
+    tmp = re.sub(' +|\xa0', ' ', tmp)
 
     # 剔除首尾空格
     tmp = tmp.strip()

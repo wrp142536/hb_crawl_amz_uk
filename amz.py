@@ -17,28 +17,28 @@ sp_key = SP_by_key()
 rule_by_key = Search_by_key()
 
 
-def parse_robot(html):
-    """
-    如果被发现是机器，人工输入验证码进行验证
-    :param html: 验证码页面html
-    :return: 返回正常请求的页面html str
-    """
-    mytree = lxml.etree.HTML(html)
-    amzn = mytree.xpath('//form[@action="/errors/validateCaptcha"]/input[@name="amzn"]/@value')
-    amzn_r = mytree.xpath('//form[@action="/errors/validateCaptcha"]/input[@name="amzn-r"]/@value')
-    img = mytree.xpath('//form[@action="/errors/validateCaptcha"]//div[@class="a-row a-text-center"]/img/@src')
-    headers = random_headers()
-    a = requests.get(img[0], headers=headers)
-    amzn = parse.quote(amzn[0])
-    amzn_r = parse.quote(amzn_r[0])
-    with open('a.jpg', 'wb') as f:
-        f.write(a.content)
-    code = input("请输入验证码：")
-
-    url = '''https://www.amazon.co.uk/errors/validateCaptcha?amzn={}&amzn-r={}&field-keywords={}'''.format(amzn, amzn_r,
-                                                                                                           code)
-    aa = requests.get(url, headers=headers)
-    return aa.text
+# def parse_robot(html):
+#     """
+#     如果被发现是机器，人工输入验证码进行验证
+#     :param html: 验证码页面html
+#     :return: 返回正常请求的页面html str
+#     """
+#     mytree = lxml.etree.HTML(html)
+#     amzn = mytree.xpath('//form[@action="/errors/validateCaptcha"]/input[@name="amzn"]/@value')
+#     amzn_r = mytree.xpath('//form[@action="/errors/validateCaptcha"]/input[@name="amzn-r"]/@value')
+#     img = mytree.xpath('//form[@action="/errors/validateCaptcha"]//div[@class="a-row a-text-center"]/img/@src')
+#     headers = random_headers()
+#     a = requests.get(img[0], headers=headers)
+#     amzn = parse.quote(amzn[0])
+#     amzn_r = parse.quote(amzn_r[0])
+#     with open('a.jpg', 'wb') as f:
+#         f.write(a.content)
+#     code = input("请输入验证码：")
+#
+#     url = '''https://www.amazon.co.uk/errors/validateCaptcha?amzn={}&amzn-r={}&field-keywords={}'''.format(amzn, amzn_r,
+#                                                                                                            code)
+#     aa = requests.get(url, headers=headers)
+#     return aa.text
 
 
 @retry(5)
@@ -187,6 +187,7 @@ def listing_uk(asin):
     #     return
 
     # 排名情况
+    regx_paiming = re.compile('#*([\d, ]+)?.* in (.*)\(')
     for rank_rule in lst.rules_rank():
         if rank_rule[0] == 're_S':
             ranks = re.findall(rank_rule[1], a, re.S)
@@ -196,7 +197,8 @@ def listing_uk(asin):
             ranks = re.findall(rank_rule[1], a)
         ranks0 = re_clear_str(ranks)
         if len(ranks0) > 0:
-            ranks = re.findall('(.*) in (.*)\(', ranks0)
+            # ranks = re.findall('(.*) in (.*)\(', ranks0)
+            ranks = regx_paiming.findall(ranks0)
             # 大类中排名
             listing['大类中排名'] = re.sub(' |Free|,|#', '', ranks[0][0])
             # listing['大类中排名'] = ranks[0][0].replace(' ', '').replace('Free', '').replace(',', '').replace('#', '')
@@ -235,6 +237,7 @@ def listing_uk(asin):
             if len(revs) > 0:
                 listing['评论数'] = revs[0]
                 break
+
     if listing['评论数'] != 0:
         try:
             listing['评论数'] = int(listing['评论数'].replace(',', '').replace(' ', ''))
@@ -506,7 +509,7 @@ if __name__ == '__main__':
     # print(len(asins))
 
     # print(asins)
-    a = listing_uk('B072LZZ1H1')
+    a = listing_uk('B00TFIPX82')
     print(a)
     # get_sell_time('B01E8ZKD3G', 2)
 
