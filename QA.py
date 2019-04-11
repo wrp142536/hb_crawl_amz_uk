@@ -58,7 +58,7 @@ class Q_and_A:
                 if len(href) > 0:
                     html_0 = get_request('https://www.amazon.co.uk' + href[0])
                     if not html_0:
-                        logger.error(f'请求https://www.amazon.co.uk{href[0]}被拒绝')
+                        logger.error(f'请求https://www.amazon.co.uk{href[0]}被拒绝多次')
                         continue
                     # 提问者的发布日期
                     time = regx.findall(html_0)

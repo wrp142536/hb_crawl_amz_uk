@@ -1,7 +1,7 @@
 from amz import get_request
 import lxml.etree
 import re
-from tools import date_strft, return_list0_to_str, replace_emoji
+from tools import date_strft, return_list0_to_str, replace_emoji,re_clear_str
 from mylog import logger
 
 
@@ -15,7 +15,7 @@ class Reveiews:
     :param filter_by: 过滤选项
     """
 
-    def __init__(self, asin, number, sort='helpful', star='all_stars', filter_by='all_reviews'):
+    def __init__(self, asin, number, sort='recent', star='all_stars', filter_by='all_reviews'):
         self.asin = asin
         self.number = number
         self.sort = sort
@@ -126,7 +126,7 @@ class Reveiews:
                 title = replace_emoji(title)
                 title = title.replace('"', "'")
 
-                text = return_list0_to_str(text)
+                text = re_clear_str(text)
                 text = replace_emoji(text)
                 text = text.replace('"', "'")
                 asin = return_list0_to_str(asin)
@@ -137,7 +137,7 @@ class Reveiews:
 
 
 if __name__ == '__main__':
-    rv = Reveiews('B07CS1XKST', 10)
+    rv = Reveiews('B077ZYVHY4', 10)
     aa = rv.parse()
     print(len(aa))
     for i in aa:

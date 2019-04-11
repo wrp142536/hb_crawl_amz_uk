@@ -240,29 +240,34 @@ def listing_uk(asin):
             logger.error(f"【{asin}】大类排名格式化错误【{listing['大类中排名']}】")
 
     # 子类排名情况
+    child_rank1 = ''
     for child_rank in lst.rules_child_rank():
         if child_rank[0] == 'xpath':
             ranks1 = mytree.xpath(child_rank[1])
             if len(ranks1) > 0:
                 child_rank_list1 = ranks1[0].xpath('string(.)')
                 child_rank1 = list_to_str(child_rank_list1)
-                if listing['大类中排名'] == 0:
-                    child_rank2 = '[[' + child_rank1 + ']]'
-                else:
-                    child_rank2 = '[[' + str(listing['大类中排名']) + ',' + listing['大类名字'] + child_rank1 + ']]'
-                tmp_999 = re.sub('#', '],[', child_rank2)
-                listing['子类排名'] = re.sub(' in ', ',', tmp_999)
-                # listing['子类排名'] = child_rank1
+                # if str(listing['大类中排名']) == str(0):
+                #     child_rank2 = '[[' + child_rank1 + ']]'
+                # else:
+                #     child_rank2 = '[[' + str(listing['大类中排名']) + ',' + listing['大类名字'] + child_rank1 + ']]'
+                # tmp_999 = re.sub('#', '],[', child_rank2)
+                # listing['子类排名'] = re.sub(' in ', ',', tmp_999)
+                # # listing['子类排名'] = child_rank1
                 break
         else:
             ranks1 = mytree.xpath(child_rank[1])
             if len(ranks1) > 0:
                 child_rank1 = list_to_str(ranks1)
-                child_rank2 = '[[' + str(listing['大类中排名']) + ',' + listing['大类名字'] + child_rank1 + ']]'
-                tmp_999 = re.sub('#', '],[', child_rank2)
-                listing['子类排名'] = re.sub(' in ', ',', tmp_999)
-                # listing['子类排名'] = child_rank1
                 break
+
+    if str(listing['大类中排名']) == str(0):
+        child_rank2 = '[[' + child_rank1 + ']]'
+    else:
+        child_rank2 = '[[' + str(listing['大类中排名']) + ',' + listing['大类名字'] + child_rank1 + ']]'
+    tmp_999 = re.sub('#', '],[', child_rank2)
+    listing['子类排名'] = re.sub(' in ', ',', tmp_999)
+    # listing['子类排名'] = child_rank1
 
     # 评论个数
     for rev in lst.rules_rev():
@@ -557,7 +562,7 @@ if __name__ == '__main__':
     # print(len(asins))
 
     # print(asins)
-    a = listing_uk('B01HYVNHN4')
+    a = listing_uk('B07NRTBN39')
     print(a)
     # get_sell_time('B01E8ZKD3G', 2)
 
