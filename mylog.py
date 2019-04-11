@@ -12,8 +12,8 @@ class GzTimedRotatingFileHandler(TimedRotatingFileHandler):
         super(GzTimedRotatingFileHandler, self).__init__(filename, when, interval, **kwargs)
 
     def doGzip(self, old_log):
-        with open(old_log) as old:
-            with gzip.open(old_log + '.rar', 'wb') as comp_log:
+        with open(old_log, 'rb') as old:
+            with gzip.open(old_log.replace('.log', '', 1) + '.gz', 'wb') as comp_log:
                 comp_log.writelines(old)
         os.remove(old_log)
 
@@ -21,7 +21,6 @@ class GzTimedRotatingFileHandler(TimedRotatingFileHandler):
         if self.stream:
             self.stream.close()
             self.stream = None
-        # get the time that this sequence started at and make it a TimeTuple
         currentTime = int(time.time())
         dstNow = time.localtime(currentTime)[-1]
         t = self.rolloverAt - self.interval
@@ -91,22 +90,23 @@ class My_log(Singleton):
             #                                                           backupCount=7, encoding='utf-8')
             # warning_handler = logging.handlers.TimedRotatingFileHandler(self.warning_name, when='midnight', interval=7,
             #                                                             backupCount=7, encoding='utf-8')
-            #
+            # #
 
-            info_handler = GzTimedRotatingFileHandler(self.info_name, when='midnight', interval=7,
+            info_handler = GzTimedRotatingFileHandler(self.info_name, when='D', interval=10,
                                                       backupCount=7, encoding='utf-8')
-            error_handler = GzTimedRotatingFileHandler(self.error_name, when='midnight', interval=7,
+            error_handler = GzTimedRotatingFileHandler(self.error_name, when='D', interval=10,
                                                        backupCount=7, encoding='utf-8')
-            warning_handler = GzTimedRotatingFileHandler(self.warning_name, when='midnight', interval=7,
+            warning_handler = GzTimedRotatingFileHandler(self.warning_name, when='D', interval=10,
                                                          backupCount=7, encoding='utf-8')
-            # 去掉名字中的.log
-            info_handler.namer = lambda x: x.replace(".log", '')
-            error_handler.namer = lambda x: x.replace(".log", '')
-            warning_handler.namer = lambda x: x.replace(".log", '')
-            # 设置日志切割后的名字后缀
-            info_handler.suffix = "%Y%m%d"
-            error_handler.suffix = "%Y%m%d"
-            warning_handler.suffix = "%Y%m%d"
+            # # 去掉名字中的.log
+            # info_handler.namer = lambda x: x.replace(".log", '')
+            # error_handler.namer = lambda x: x.replace(".log", '')
+            # warning_handler.namer = lambda x: x.replace(".log", '')
+
+            # # # # 设置日志切割后的名字后缀
+            info_handler.suffix = "%Y%m%d.log"
+            error_handler.suffix = "%Y%m%d.log"
+            warning_handler.suffix = "%Y%m%d.log"
 
             # 设置日志等级
             error_handler.setLevel(logging.ERROR)
