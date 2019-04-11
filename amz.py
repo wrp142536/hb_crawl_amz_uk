@@ -42,6 +42,7 @@ rule_by_key = Search_by_key()
 
 
 @retry(5)
+@run_time
 def get_request(url):
     """
     对某个url进行get请求，
@@ -53,7 +54,19 @@ def get_request(url):
         proxies = my_proxy()
         resp = requests.get(url=url, proxies=proxies, verify=False, timeout=120)
         html = resp.text
-        logger.warning(f'''请求：【{url}】,返回大小{len(html)}字节''')
+        logger.warning(f'''请求：【{url}】,状态码：【{resp.status_code}】,返回大小{len(html)}字节''')
+
+        # 此处抛出异常，让装饰器处理，进行再次发起请求
+        if resp.status_code != 200:
+            raise ValueError
+
+        # if lenth < 2000:
+        #     path_name = re.split('/', url)[-2]
+        # if not os.path.exists(targetPath):
+        #     os.makedirs(targetPath)
+        # with open(f'errors_html/{path_name}.txt', 'w') as fb:
+        #     fb.write(f'状态码：【{resp.status_code}】,【内容：{html}】')
+
         # print(resp.headers)
         # resp = requests.get(url=url, headers=headers,verify=False)
         # if is_robot(resp.text):
@@ -188,6 +201,7 @@ def listing_uk(asin):
 
     # 排名情况
     regx_paiming = re.compile('#*([\d, ]+)?.* in (.*)\(')
+    regx_paiming2 = re.compile('Rank: #*([\d, ]+)?.* in (.*)\(See ')
     for rank_rule in lst.rules_rank():
         if rank_rule[0] == 're_S':
             ranks = re.findall(rank_rule[1], a, re.S)
@@ -196,14 +210,28 @@ def listing_uk(asin):
         else:
             ranks = re.findall(rank_rule[1], a)
         ranks0 = re_clear_str(ranks)
+
         if len(ranks0) > 0:
-            # ranks = re.findall('(.*) in (.*)\(', ranks0)
+            # print(ranks0)
             ranks = regx_paiming.findall(ranks0)
+            # if len(ranks)>0:
             # 大类中排名
-            listing['大类中排名'] = re.sub(' |Free|,|#', '', ranks[0][0])
-            # listing['大类中排名'] = ranks[0][0].replace(' ', '').replace('Free', '').replace(',', '').replace('#', '')
+            try:
+                listing['大类中排名'] = re.sub(' |Free|,|#', '', ranks[0][0])
+            except IndexError:
+                pass
+            if listing['大类中排名'] == '':
+                ranks = regx_paiming2.findall(ranks0)
+                try:
+                    listing['大类中排名'] = re.sub(' |Free|,|#', '', ranks[0][0])
+                except IndexError:
+                    pass
+
             # 大类名称
-            listing['大类名字'] = ranks[0][1]
+            try:
+                listing['大类名字'] = ranks[0][1]
+            except IndexError:
+                pass
             break
     if listing['大类中排名'] != 0:
         try:
@@ -218,6 +246,18 @@ def listing_uk(asin):
             if len(ranks1) > 0:
                 child_rank_list1 = ranks1[0].xpath('string(.)')
                 child_rank1 = list_to_str(child_rank_list1)
+                if listing['大类中排名'] == 0:
+                    child_rank2 = '[[' + child_rank1 + ']]'
+                else:
+                    child_rank2 = '[[' + str(listing['大类中排名']) + ',' + listing['大类名字'] + child_rank1 + ']]'
+                tmp_999 = re.sub('#', '],[', child_rank2)
+                listing['子类排名'] = re.sub(' in ', ',', tmp_999)
+                # listing['子类排名'] = child_rank1
+                break
+        else:
+            ranks1 = mytree.xpath(child_rank[1])
+            if len(ranks1) > 0:
+                child_rank1 = list_to_str(ranks1)
                 child_rank2 = '[[' + str(listing['大类中排名']) + ',' + listing['大类名字'] + child_rank1 + ']]'
                 tmp_999 = re.sub('#', '],[', child_rank2)
                 listing['子类排名'] = re.sub(' in ', ',', tmp_999)
@@ -301,10 +341,18 @@ def listing_uk(asin):
 
     # 自营
     for ziying in lst.rules_ziying():
-        if ziying[0] == 're':
-            is_ziying = re.findall(ziying[1], a)
+
+        if ziying[0] == 'xpath':
+            is_ziying = mytree.xpath(ziying[1])
             if len(is_ziying) > 0:
-                listing['是否自营'] = 1
+                is_ziying_str = list_to_str(is_ziying)
+                if 'sold by Amazon.' in is_ziying_str:
+                    listing['是否自营'] = 1
+                    break
+        # elif ziying[0] == 're':
+        #     is_ziying = re.findall(ziying[1], a)
+        #     if len(is_ziying) > 0:
+        #         listing['是否自营'] = 1
 
     return listing
 
@@ -509,7 +557,7 @@ if __name__ == '__main__':
     # print(len(asins))
 
     # print(asins)
-    a = listing_uk('B00TFIPX82')
+    a = listing_uk('B01HYVNHN4')
     print(a)
     # get_sell_time('B01E8ZKD3G', 2)
 

@@ -20,6 +20,8 @@ class Listing_Rules:
         rules = [
             ('xpath', '//li[@id="SalesRank"]/text()'),
             ('xpath', '//tr[@id="SalesRank"]/td[@class="value"]/text()'),
+            ('xpath', '//div[contains(@class,"column col2")]//div[@class="pdTab"]//text()'),
+
         ]
         return rules
 
@@ -28,6 +30,8 @@ class Listing_Rules:
     def rules_child_rank():
         rules = [
             ('xpath', '//*[@id="SalesRank"]//ul'),
+            ('xpath2', '//li[@class="zg_hrsr_item"]//text()'),
+
         ]
         return rules
 
@@ -102,7 +106,8 @@ class Listing_Rules:
     # 自营
     @staticmethod
     def rules_ziying():
-        rules = [('re', 'sold by Amazon.'),
+        rules = [('xpath', '//div[@id="merchant-info"]//text()'),
+                 ('re', 'sold by Amazon.'),
                  ]
         return rules
 

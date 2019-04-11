@@ -1,4 +1,4 @@
-import random
+# import random
 import datetime
 import re
 import time
@@ -105,7 +105,7 @@ def re_clear_str(args):
         strs = args
 
     # 换行符剔除
-    tmp = re.sub('\n|\r|\t|\f', '', strs)
+    tmp = re.sub('\n|\r|\t|\f', ' ', strs)
     tmp = re.sub(' +|\xa0', ' ', tmp)
 
     # 剔除首尾空格

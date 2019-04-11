@@ -1,5 +1,9 @@
-from tools import Singleton, clear_other_list
-from amz import asins_by_key, listing_uk, secrch_by_bsr, qq
+import os
+
+import requests
+
+from tools import Singleton, clear_other_list, my_proxy, retry
+from amz import asins_by_key, listing_uk, secrch_by_bsr, qq, get_request
 from mylog import logger
 from tools_mysql import Conn_Mysql
 import datetime
@@ -68,6 +72,7 @@ class Start_Task(GET_TASK):
         else:
             self.kwargs = {}
         self.all_asin = []
+        self.path = 'pic_uk_0'
 
     def parse_task_dict(self, task_id, black_flag_id):
         # 获取所有的asin
@@ -183,6 +188,21 @@ class Start_Task(GET_TASK):
         else:
             logger.error(f'商品详情页未抓到数据，asin：{result[0].args[0]}')
 
+    @retry(5)
+    def down_load_pic(self, url):
+        if not url:
+            return
+        proxies = my_proxy()
+        resp = requests.get(url=url, proxies=proxies, verify=False, timeout=120)
+        # 此处抛出异常，让装饰器处理，进行再次发起请求
+        if resp.status_code != 200:
+            raise ValueError
+
+        path_name = re.split('/', url)[-1]
+        with open(self.path + '/' + str(path_name), 'wb+') as fb:
+            fb.write(resp.content)
+        logger.warning(f'''图片【{url}】，大小为【%.2fKB】,状态码【{resp.status_code}】''' % (len(resp.content) / 1024))
+
     def start(self):
         logger.info('【----------爬虫任务启动------------】')
         # 查询任务id和黑名单标记
@@ -223,6 +243,22 @@ class Start_Task(GET_TASK):
         #     tmp_dict = listing_uk(asin)
         #     self.save_data(tmp_dict, 'product_info', task_id, black_flag_id, asin)
         self.change_task_status(self.task_id)
+
+        # 查询本次任务所有的pic url
+        sql_pics = f'''SELECT pic_url FROM product_info where task_id={self.task_id} and pic_url!='';'''
+        self.cursor.execute(sql_pics)
+        pics = self.cursor.fetchall()
+        my_pics = [k[0] for k in pics]
+
+        self.path = 'pic_uk_' + str(self.task_id)
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
+
+        # 创建任务2
+        reques2 = threadpool.makeRequests(self.down_load_pic, my_pics)
+        [pool.putRequest(req) for req in reques2]
+        pool.wait()
+
         logger.info('【------------爬虫任务结束------------】\n\n')
         # 向队列发送退出命令
         qq.put('exit')

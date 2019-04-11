@@ -1,11 +1,69 @@
 import logging
 import logging.handlers
+from logging.handlers import TimedRotatingFileHandler
 from tools import Singleton
+import gzip
+import os
+import time
+
+
+class GzTimedRotatingFileHandler(TimedRotatingFileHandler):
+    def __init__(self, filename, when, interval, **kwargs):
+        super(GzTimedRotatingFileHandler, self).__init__(filename, when, interval, **kwargs)
+
+    def doGzip(self, old_log):
+        with open(old_log) as old:
+            with gzip.open(old_log + '.rar', 'wb') as comp_log:
+                comp_log.writelines(old)
+        os.remove(old_log)
+
+    def doRollover(self):
+        if self.stream:
+            self.stream.close()
+            self.stream = None
+        # get the time that this sequence started at and make it a TimeTuple
+        currentTime = int(time.time())
+        dstNow = time.localtime(currentTime)[-1]
+        t = self.rolloverAt - self.interval
+        if self.utc:
+            timeTuple = time.gmtime(t)
+        else:
+            timeTuple = time.localtime(t)
+            dstThen = timeTuple[-1]
+            if dstNow != dstThen:
+                if dstNow:
+                    addend = 3600
+                else:
+                    addend = -3600
+                timeTuple = time.localtime(t + addend)
+        dfn = self.baseFilename + "." + time.strftime(self.suffix, timeTuple)
+        if os.path.exists(dfn):
+            os.remove(dfn)
+        if os.path.exists(self.baseFilename):
+            os.rename(self.baseFilename, dfn)
+            self.doGzip(dfn)
+        if self.backupCount > 0:
+            for s in self.getFilesToDelete():
+                os.remove(s)
+        if not self.delay:
+            self.stream = self._open()
+        newRolloverAt = self.computeRollover(currentTime)
+        while newRolloverAt <= currentTime:
+            newRolloverAt = newRolloverAt + self.interval
+        if (self.when == 'MIDNIGHT' or self.when.startswith('W')) and not self.utc:
+            dstAtRollover = time.localtime(newRolloverAt)[-1]
+            if dstNow != dstAtRollover:
+                if not dstNow:  # DST kicks in before next rollover, so we need to deduct an hour
+                    addend = -3600
+                else:  # DST bows out before next rollover, so we need to add an hour
+                    addend = 3600
+                newRolloverAt += addend
+        self.rolloverAt = newRolloverAt
 
 
 class My_log(Singleton):
     """
-    日志系统，error和info分别记录
+    日志系统，error,info,warning分别记录,每周切割并压缩日志
     """
 
     def __init__(self, logger_name='lyl', info_name='amz_info.log', error_name='amz_error.log',
@@ -27,20 +85,28 @@ class My_log(Singleton):
             formatter01 = logging.Formatter("%(asctime)s - %(message)s", "%Y%m%d %H:%M:%S")
 
             # 创建两个handler
-            info_handler = logging.handlers.TimedRotatingFileHandler(self.info_name, when='midnight', interval=7,
-                                                                     backupCount=7, encoding='utf-8')
-            error_handler = logging.handlers.TimedRotatingFileHandler(self.error_name, when='midnight', interval=7,
-                                                                      backupCount=7, encoding='utf-8')
-            warning_handler = logging.handlers.TimedRotatingFileHandler(self.warning_name, when='midnight', interval=7,
-                                                                        backupCount=7, encoding='utf-8')
+            # info_handler = logging.handlers.TimedRotatingFileHandler(self.info_name, when='midnight', interval=7,
+            #                                                          backupCount=7, encoding='utf-8')
+            # error_handler = logging.handlers.TimedRotatingFileHandler(self.error_name, when='midnight', interval=7,
+            #                                                           backupCount=7, encoding='utf-8')
+            # warning_handler = logging.handlers.TimedRotatingFileHandler(self.warning_name, when='midnight', interval=7,
+            #                                                             backupCount=7, encoding='utf-8')
+            #
 
-            info_handler.namer = lambda x: x.replace(".log", '_')
-            error_handler.namer = lambda x: x.replace(".log", '_')
-            warning_handler.namer = lambda x: x.replace(".log", '_')
+            info_handler = GzTimedRotatingFileHandler(self.info_name, when='midnight', interval=7,
+                                                      backupCount=7, encoding='utf-8')
+            error_handler = GzTimedRotatingFileHandler(self.error_name, when='midnight', interval=7,
+                                                       backupCount=7, encoding='utf-8')
+            warning_handler = GzTimedRotatingFileHandler(self.warning_name, when='midnight', interval=7,
+                                                         backupCount=7, encoding='utf-8')
+            # 去掉名字中的.log
+            info_handler.namer = lambda x: x.replace(".log", '')
+            error_handler.namer = lambda x: x.replace(".log", '')
+            warning_handler.namer = lambda x: x.replace(".log", '')
             # 设置日志切割后的名字后缀
-            info_handler.suffix = "%Y%m%d.log"
-            error_handler.suffix = "%Y%m%d.log"
-            warning_handler.suffix = "%Y%m%d.log"
+            info_handler.suffix = "%Y%m%d"
+            error_handler.suffix = "%Y%m%d"
+            warning_handler.suffix = "%Y%m%d"
 
             # 设置日志等级
             error_handler.setLevel(logging.ERROR)
@@ -66,7 +132,8 @@ class My_log(Singleton):
             logger.addHandler(info_handler)
             logger.addHandler(error_handler)
             logger.addHandler(warning_handler)
-            return logger
+        return logger
 
 
+# 为了方便导入logger，在此处执行
 logger = My_log().get_logger()
