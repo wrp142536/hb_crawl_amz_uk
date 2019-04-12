@@ -1,7 +1,6 @@
 import os
-
+import re
 import requests
-
 from tools import Singleton, clear_other_list, my_proxy, retry
 from amz import asins_by_key, listing_uk, secrch_by_bsr, qq, get_request
 from mylog import logger
@@ -9,7 +8,6 @@ from tools_mysql import Conn_Mysql
 import datetime
 from QA import Q_and_A
 from RV import Reveiews
-import re
 import threadpool
 
 

@@ -42,7 +42,7 @@ rule_by_key = Search_by_key()
 
 
 @retry(5)
-@run_time
+# @run_time
 def get_request(url):
     """
     对某个url进行get请求，

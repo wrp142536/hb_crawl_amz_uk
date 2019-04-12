@@ -1,15 +1,25 @@
 from tools import Singleton
 import pymysql
+import platform
 
 
 class Conn_Mysql(Singleton):
     def __init__(self, mysql_ip='127.0.0.1', mysql_database='test', mysql_password='liuyalong', mysql_username='root'):
-        self.mysql_ip = mysql_ip
-        self.mysql_database = mysql_database
-        self.mysql_password = mysql_password
-        self.mysql_username = mysql_username
+        # 对不同系统选择不同数据库对象
+        sysstr = platform.system()
+        if sysstr == "Linux":
+            self.mysql_ip = '172.105.220.160'
+            self.mysql_database = 'test'
+            self.mysql_password = 'hb_root123456'
+            self.mysql_username = 'root'
+        else:
+            self.mysql_ip = mysql_ip
+            self.mysql_database = mysql_database
+            self.mysql_password = mysql_password
+            self.mysql_username = mysql_username
 
     def conn(self):
+
         db = pymysql.connect(self.mysql_ip, self.mysql_username, self.mysql_password, self.mysql_database,
                              use_unicode=True, charset='utf8')
         return db
