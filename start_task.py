@@ -273,6 +273,7 @@ class Start_Task(GET_TASK):
 
 
 if __name__ == '__main__':
+    print('爬虫程序启动')
     s = Start_Task()
     s.start()
-    print('over!')
+    print('爬虫程序结束')
