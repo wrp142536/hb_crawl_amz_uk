@@ -1,7 +1,7 @@
 from amz import get_request
 import lxml.etree
 import re
-from tools import date_strft, return_list0_to_str, replace_emoji,re_clear_str
+from tools import date_strft, return_list0_to_str, replace_emoji, re_clear_str
 from mylog import logger
 
 
@@ -117,7 +117,11 @@ class Reveiews:
                     time = '1970/01/01'
 
                 if len(star) > 0:
-                    star = float(star[0].replace(' ', ''))
+                    try:
+                        star = float(star[0].replace(' ', ''))
+                    except ValueError:
+                        logger.error(f'''RV star【{star[0]}】转换为float有误''')
+                        continue
                 else:
                     star = 0
                 names = return_list0_to_str(names)

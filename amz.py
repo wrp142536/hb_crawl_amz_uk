@@ -351,7 +351,8 @@ def listing_uk(asin):
             is_ziying = mytree.xpath(ziying[1])
             if len(is_ziying) > 0:
                 is_ziying_str = list_to_str(is_ziying)
-                if 'sold by Amazon.' in is_ziying_str:
+                _is_ziying = re.findall('[Ss]old [Bb]y [Aa]mazon', is_ziying_str)
+                if len(_is_ziying) > 0:
                     listing['是否自营'] = 1
                     break
         # elif ziying[0] == 're':
@@ -562,7 +563,7 @@ if __name__ == '__main__':
     # print(len(asins))
 
     # print(asins)
-    a = listing_uk('B07NRTBN39')
+    a = listing_uk('B004PCJOAG')
     print(a)
     # get_sell_time('B01E8ZKD3G', 2)
 
