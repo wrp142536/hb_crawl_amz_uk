@@ -237,25 +237,22 @@ class Start_Task(GET_TASK):
         [pool.putRequest(req) for req in reques]
         pool.wait()
 
-        # for asin in asins:
-        #     tmp_dict = listing_uk(asin)
-        #     self.save_data(tmp_dict, 'product_info', task_id, black_flag_id, asin)
         self.change_task_status(self.task_id)
 
-        # 查询本次任务所有的pic url
-        sql_pics = f'''SELECT pic_url FROM product_info where task_id={self.task_id} and pic_url!='';'''
-        self.cursor.execute(sql_pics)
-        pics = self.cursor.fetchall()
-        my_pics = [k[0] for k in pics]
-
-        self.path = 'pic_uk_' + str(self.task_id)
-        if not os.path.exists(self.path):
-            os.makedirs(self.path)
-
-        # 创建任务2
-        reques2 = threadpool.makeRequests(self.down_load_pic, my_pics)
-        [pool.putRequest(req) for req in reques2]
-        pool.wait()
+        # # 查询本次任务所有的pic url
+        # sql_pics = f'''SELECT pic_url FROM product_info where task_id={self.task_id} and pic_url!='';'''
+        # self.cursor.execute(sql_pics)
+        # pics = self.cursor.fetchall()
+        # my_pics = [k[0] for k in pics]
+        #
+        # self.path = 'pic_uk_' + str(self.task_id)
+        # if not os.path.exists(self.path):
+        #     os.makedirs(self.path)
+        #
+        # # 创建任务2
+        # reques2 = threadpool.makeRequests(self.down_load_pic, my_pics)
+        # [pool.putRequest(req) for req in reques2]
+        # pool.wait()
 
         logger.info('【------------爬虫任务结束------------】\n\n')
         # 向队列发送退出命令
@@ -273,7 +270,7 @@ class Start_Task(GET_TASK):
 
 
 if __name__ == '__main__':
-    print('爬虫程序启动')
+    # print(f"{datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d %H:%M:%S')} 爬虫程序启动")
     s = Start_Task()
     s.start()
-    print('爬虫程序结束')
+    # print(f"{datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d %H:%M:%S')} 爬虫程序关闭")

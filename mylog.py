@@ -71,9 +71,12 @@ class My_log(Singleton):
         self.logger_name = logger_name
         self.error_name = error_name
         self.warning_name = warning_name
+        self.path = os.path.dirname(os.path.abspath(__file__)) + '/logs/'
 
     def get_logger(self):
         logger = logging.getLogger(self.logger_name)
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
         # 添加此行，防止日志重复记录
         if not logger.handlers:
             # 默认日志等级
@@ -92,11 +95,11 @@ class My_log(Singleton):
             #                                                             backupCount=7, encoding='utf-8')
             # #
 
-            info_handler = GzTimedRotatingFileHandler(self.info_name, when='D', interval=10,
+            info_handler = GzTimedRotatingFileHandler(self.path + self.info_name, when='D', interval=10,
                                                       backupCount=7, encoding='utf-8')
-            error_handler = GzTimedRotatingFileHandler(self.error_name, when='D', interval=10,
+            error_handler = GzTimedRotatingFileHandler(self.path + self.error_name, when='D', interval=10,
                                                        backupCount=7, encoding='utf-8')
-            warning_handler = GzTimedRotatingFileHandler(self.warning_name, when='D', interval=10,
+            warning_handler = GzTimedRotatingFileHandler(self.path + self.warning_name, when='D', interval=10,
                                                          backupCount=7, encoding='utf-8')
             # # 去掉名字中的.log
             # info_handler.namer = lambda x: x.replace(".log", '')

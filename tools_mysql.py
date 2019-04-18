@@ -4,7 +4,7 @@ import platform
 
 
 class Conn_Mysql(Singleton):
-    def __init__(self, mysql_ip='127.0.0.1', mysql_database='test', mysql_password='liuyalong', mysql_username='root'):
+    def __init__(self, mysql_ip='127.0.0.1', mysql_database='hb_site', mysql_password='liuyalong', mysql_username='root'):
         # 对不同系统选择不同数据库对象
         sysstr = platform.system()
         if sysstr == "Linux":
