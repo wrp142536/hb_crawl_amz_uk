@@ -116,7 +116,7 @@ class My_log(Singleton):
                 debug_handler = GzTimedRotatingFileHandler(self.path + self.debug_name, when='D', interval=10,
                                                            backupCount=7, encoding='utf-8')
                 debug_handler.suffix = "%Y%m%d.log"
-                debug_handler.setFormatter(formatter01)
+                debug_handler.setFormatter(formatter)
                 debug_handler.setLevel(logging.DEBUG)
                 debug_filter = logging.Filter()
                 debug_filter.filter = lambda record: record.levelno == logging.DEBUG
