@@ -22,10 +22,10 @@ def run_time(func):
     @wraps(func)  # 保留源信息
     def mywarps(*args, **kwargs):
         start_time = time.time()
-        # logger.debug(f'''进入 {func.__name__} {args}''')
+        logger.debug(f'''进入 {func.__name__} {args}''')
         aa = func(*args, **kwargs)
         logger.debug(f'''{func.__name__}{args}耗时:{time.time() - start_time}''')
-        # logger.debug(f'''离开 {func.__name__} ''')
+        logger.debug(f'''离开 {func.__name__} ''')
         return aa
 
     return mywarps

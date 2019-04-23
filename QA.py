@@ -59,6 +59,7 @@ class Q_and_A:
                 href = div.xpath('.//div[@class="a-fixed-left-grid-col a-col-right"]/a/@href')
                 if len(href) > 0:
                     html_0 = get_request('https://www.amazon.co.uk' + href[0])
+                    print(href[0])
                     if not html_0:
                         logger.error(f'请求https://www.amazon.co.uk{href[0]}被拒绝多次')
                         continue
