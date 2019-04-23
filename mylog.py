@@ -1,10 +1,20 @@
 import logging
 import logging.handlers
 from logging.handlers import TimedRotatingFileHandler
-from tools import Singleton
 import gzip
 import os
 import time
+
+
+class Singleton:
+    """
+    单例模式
+    """
+
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, '_instance'):
+            cls._instance = object.__new__(cls)
+        return cls._instance
 
 
 class GzTimedRotatingFileHandler(TimedRotatingFileHandler):
@@ -66,11 +76,12 @@ class My_log(Singleton):
     """
 
     def __init__(self, logger_name='lyl', info_name='amz_info.log', error_name='amz_error.log',
-                 warning_name='amz_warning.log'):
+                 warning_name='amz_warning.log', debug_name='amz_debug.log'):
         self.info_name = info_name
         self.logger_name = logger_name
         self.error_name = error_name
         self.warning_name = warning_name
+        self.debug_name = debug_name
         self.path = os.path.dirname(os.path.abspath(__file__)) + '/logs/'
 
     def get_logger(self):
@@ -80,7 +91,7 @@ class My_log(Singleton):
         # 添加此行，防止日志重复记录
         if not logger.handlers:
             # 默认日志等级
-            logger.setLevel(logging.INFO)
+            logger.setLevel(logging.DEBUG)
 
             # 格式化输出
             formatter = logging.Formatter("%(asctime)s - %(filename)s - %(funcName)s - %(message)s", "%Y%m%d %H:%M:%S")
@@ -101,6 +112,17 @@ class My_log(Singleton):
                                                        backupCount=7, encoding='utf-8')
             warning_handler = GzTimedRotatingFileHandler(self.path + self.warning_name, when='D', interval=10,
                                                          backupCount=7, encoding='utf-8')
+            if logger.level == logging.DEBUG:
+                debug_handler = GzTimedRotatingFileHandler(self.path + self.debug_name, when='D', interval=10,
+                                                           backupCount=7, encoding='utf-8')
+                debug_handler.suffix = "%Y%m%d.log"
+                debug_handler.setFormatter(formatter01)
+                debug_handler.setLevel(logging.DEBUG)
+                debug_filter = logging.Filter()
+                debug_filter.filter = lambda record: record.levelno == logging.DEBUG
+                debug_handler.addFilter(debug_filter)
+                logger.addHandler(debug_handler)
+
             # # 去掉名字中的.log
             # info_handler.namer = lambda x: x.replace(".log", '')
             # error_handler.namer = lambda x: x.replace(".log", '')

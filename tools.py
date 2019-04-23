@@ -4,6 +4,8 @@ import re
 import time
 import queue
 from threading import Thread
+from functools import wraps
+from mylog import logger
 
 
 def my_proxy():
@@ -17,16 +19,16 @@ def my_proxy():
 
 def run_time(func):
     # 此装饰器，用来调试
-    def warps(*args, **kwargs):
+    @wraps(func)  # 保留源信息
+    def mywarps(*args, **kwargs):
         start_time = time.time()
-        print('进入', func.__name__)
+        # logger.debug(f'''进入 {func.__name__} {args}''')
         aa = func(*args, **kwargs)
-        print(func.__name__, '耗时', time.time() - start_time)
-        print('离开', func.__name__)
-
+        logger.debug(f'''{func.__name__}{args}耗时:{time.time() - start_time}''')
+        # logger.debug(f'''离开 {func.__name__} ''')
         return aa
 
-    return warps
+    return mywarps
 
 
 def base_64_pic():
