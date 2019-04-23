@@ -1,7 +1,7 @@
 import os
 import re
 import requests
-from tools import Singleton, clear_other_list, my_proxy, retry
+from tools import Singleton, clear_other_list, my_proxy, retry, run_time
 from amz import asins_by_key, listing_uk, secrch_by_bsr, qq, get_request
 from mylog import logger
 from tools_mysql import Conn_Mysql
@@ -16,6 +16,7 @@ class GET_TASK(Singleton):
     cursor = db.cursor()
 
     @classmethod
+    @run_time
     def get_task_id(cls):
         # 返回任务id（未完成的任务）和黑名单标记id
         sql = f'''SELECT task.id ,task.black_flag_id FROM task INNER JOIN black_flag ON ( task.black_flag_id = \
@@ -25,6 +26,7 @@ class GET_TASK(Singleton):
         return data
 
     @classmethod
+    @run_time
     def get_task_info(cls, task_id):
         sql = f'''SELECT * FROM task_info where task_id={task_id} ;'''
         cls.cursor.execute(sql)
@@ -32,6 +34,7 @@ class GET_TASK(Singleton):
         return data
 
     @classmethod
+    @run_time
     def get_black_List(cls, black_flag_id):
         if black_flag_id == 0:
             return [[]]
@@ -65,6 +68,7 @@ class Start_Task(GET_TASK):
         self.all_asin = []
         self.path = 'pic_uk_0'
 
+    @run_time
     def parse_task_dict(self, task_id, black_flag_id):
         # 获取所有的asin
         if self.kwargs.__contains__('key'):
@@ -114,6 +118,7 @@ class Start_Task(GET_TASK):
                 for data in rv_data:
                     self.save_data(data, 'review', task_id, black_flag_id, asin[0])
 
+    @run_time
     def parse_task_datas_to_dict(self, datas):
         key = []
         bsr = []
@@ -137,6 +142,7 @@ class Start_Task(GET_TASK):
         self.kwargs['qa'] = qa
         self.kwargs['review'] = review
 
+    @run_time
     def save_data(self, data, table, task_id, black_flag_id, asin):
         run_time = datetime.datetime.strftime(datetime.datetime.today(), '%Y/%m/%d')
         if table == 'product_info':
@@ -172,6 +178,7 @@ class Start_Task(GET_TASK):
                 logger.error(sql)
             self.db.commit()
 
+    @run_time
     def callback_for_save_listing(self, *result):
         # args[0].args[0] 是asin，来源于listing函数的输入参数，result[1]是listing函数的执行结果
         if result[1]:
@@ -256,6 +263,7 @@ class Start_Task(GET_TASK):
         # 向队列发送退出命令
         qq.put('exit')
 
+    @run_time
     def change_task_status(self, task_id):
         # 任务完成后把数据库任务状态设为已完成
         sql = f'''update task set is_finished=1 where id={task_id}'''
