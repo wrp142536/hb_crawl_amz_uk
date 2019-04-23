@@ -16,17 +16,10 @@ class GET_TASK(Singleton):
     cursor = db.cursor()
 
     @classmethod
-    def get_black_flag_id(cls):
-        # 此处只查英国站的黑名单
-        sql = f'''SELECT id FROM black_flag where country='uk';'''
-        cls.cursor.execute(sql)
-        data = cls.cursor.fetchall()
-        return data
-
-    @classmethod
     def get_task_id(cls):
         # 返回任务id（未完成的任务）和黑名单标记id
-        sql = f'''SELECT id,black_flag_id FROM task where is_finished=0 order by id desc limit 1;'''
+        sql = f'''SELECT task.id ,task.black_flag_id FROM task INNER JOIN black_flag ON ( task.black_flag_id = \
+            black_flag.id and task.is_finished=0 and black_flag.country='uk') ORDER BY id desc limit 1;'''
         cls.cursor.execute(sql)
         data = cls.cursor.fetchall()
         return data
@@ -203,6 +196,11 @@ class Start_Task(GET_TASK):
 
     def start(self):
         logger.info('【----------爬虫任务启动------------】')
+        # uk_tasks = self.get_black_flag_id()
+        # if not uk_tasks:
+        #     logger.info('没有获取任务')
+        #     logger.info('【------------爬虫任务结束------------】\n\n')
+
         # 查询任务id和黑名单标记
         tsk_data = self.get_task_id()
         if not tsk_data:

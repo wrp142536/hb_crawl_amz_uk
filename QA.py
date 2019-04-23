@@ -39,7 +39,7 @@ class Q_and_A:
     def parse(self):
         max_page = (int(self.number) - 1) // 10 + 1
         result = []
-        regx = re.compile('asked on (.*)')
+        regx = re.compile('asked on (.*?)<')
         for page in range(1, max_page + 1):
             html = self.get_data(page)
             if not html:
@@ -84,10 +84,12 @@ class Q_and_A:
                 if not time:
                     time = '1970/01/01'
                 result.append((time, q, a, name, helpful))
-        return result[:int(self.number)]
+                if len(result) == self.number:
+                    return result
+        # return result[:int(self.number)]
 
 
 if __name__ == '__main__':
-    q = Q_and_A('B07CGWHV2C', 10)
+    q = Q_and_A('B07BMTLT2W', 1)
     a = q.parse()
     print(a)
