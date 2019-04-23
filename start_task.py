@@ -233,8 +233,10 @@ class Start_Task(GET_TASK):
         # 清洗asin,去掉黑名单里的asin
         asins = clear_other_list(self.all_asin, black_asins)
         logger.info(f'共需要解析【{len(asins)}】个asin')
+        if len(asins) == 0:
+            return
 
-        # 开一个10数量的线程池
+            # 开一个10数量的线程池
         pool = threadpool.ThreadPool(10)
         # 创建任务
         reques = threadpool.makeRequests(listing_uk, asins, callback=self.callback_for_save_listing)
@@ -262,6 +264,7 @@ class Start_Task(GET_TASK):
         logger.info('【------------爬虫任务结束------------】\n\n')
         # 向队列发送退出命令
         qq.put('exit')
+        return
 
     @run_time
     def change_task_status(self, task_id):

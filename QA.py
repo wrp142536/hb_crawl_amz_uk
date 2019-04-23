@@ -1,6 +1,6 @@
 from amz import get_request
 import lxml.etree
-from tools import list_to_str
+from tools import list_to_str,run_time
 import re
 from tools import date_strft, replace_emoji
 from mylog import logger
@@ -28,6 +28,7 @@ class Q_and_A:
             f'/{self.asin}/{page}?sort={self.method}&isAnswered=true'
         return url
 
+    @run_time
     def get_data(self, page):
         url = self.make_url(page)
         html = get_request(url)
@@ -36,6 +37,7 @@ class Q_and_A:
             return
         return html
 
+    @run_time
     def parse(self):
         max_page = (int(self.number) - 1) // 10 + 1
         result = []
