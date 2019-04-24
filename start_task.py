@@ -2,7 +2,7 @@ import os
 import re
 import requests
 from tools import Singleton, clear_other_list, my_proxy, retry, run_time
-from amz import asins_by_key, listing_uk, secrch_by_bsr, qq, get_request
+from amz import asins_by_key, listing_uk, secrch_by_bsr, get_request
 from mylog import logger
 from tools_mysql import Conn_Mysql
 import datetime
@@ -246,6 +246,7 @@ class Start_Task(GET_TASK):
             logger.info('【------------爬虫任务结束------------】\n\n')
             self.change_task_status(self.task_id)
             logger.debug('运行到%d行' % 248)
+
             return
 
             # 开一个10数量的线程池
@@ -275,7 +276,7 @@ class Start_Task(GET_TASK):
 
         logger.info('【------------爬虫任务结束------------】\n\n')
         # 向队列发送退出命令
-        qq.put('exit')
+        # qq.put('exit')
         return
 
     @run_time
