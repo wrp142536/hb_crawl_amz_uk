@@ -96,9 +96,12 @@ class Start_Task(GET_TASK):
                 QANum = reg_QANum.findall(jj)
                 sort = reg_sort.findall(jj)
                 qa = Q_and_A(asin[0], QANum[0], method=sort[0])
+                logger.debug('运行到%d行' % 99)
                 qa_data = qa.parse()
+                logger.debug('运行到%d行' % 101)
                 for data in qa_data:
                     self.save_data(data, 'qa', task_id, black_flag_id, asin[0])
+                    logger.debug('运行到%d行' % 104)
 
         if self.kwargs.__contains__('review'):
             reg_asin = re.compile('asin=(.*?)&')
@@ -113,10 +116,13 @@ class Start_Task(GET_TASK):
                 sort = reg_sortBy.findall(jj)
                 star = reg_filterByStar.findall(jj)
                 filter_by = reg_reviewerType.findall(jj)
+                logger.debug('运行到%d行' % 119)
                 rv = Reveiews(asin[0], Num[0], sort=sort[0], star=star[0], filter_by=filter_by[0])
                 rv_data = rv.parse()
+                logger.debug('运行到%d行' % 122)
                 for data in rv_data:
                     self.save_data(data, 'review', task_id, black_flag_id, asin[0])
+                    logger.debug('运行到%d行' % 125)
 
     @run_time
     def parse_task_datas_to_dict(self, datas):

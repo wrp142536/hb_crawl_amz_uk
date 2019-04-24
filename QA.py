@@ -59,7 +59,6 @@ class Q_and_A:
                 href = div.xpath('.//div[@class="a-fixed-left-grid-col a-col-right"]/a/@href')
                 if len(href) > 0:
                     html_0 = get_request('https://www.amazon.co.uk' + href[0])
-                    print(href[0])
                     if not html_0:
                         logger.error(f'请求https://www.amazon.co.uk{href[0]}被拒绝多次')
                         continue
@@ -87,7 +86,7 @@ class Q_and_A:
                 if not time:
                     time = '1970/01/01'
                 result.append((time, q, a, name, helpful))
-                if len(result) == self.number:
+                if len(result) == int(self.number):
                     return result
         # return result[:int(self.number)]
 
