@@ -231,15 +231,21 @@ class Start_Task(GET_TASK):
         logger.info(f'''黑名单asin{black_asins}''')
         # 获取任务详情
         task_info_datas = self.get_task_info(self.task_id)
+        logger.debug('运行到%d行' % 234)
 
         # 任务解析成字典格式
         self.parse_task_datas_to_dict(task_info_datas)
+        logger.debug('运行到%d行' % 238)
         # 解析字典
         self.parse_task_dict(self.task_id, self.black_flag_id)
+        logger.debug('运行到%d行' % 241)
         # 清洗asin,去掉黑名单里的asin
         asins = clear_other_list(self.all_asin, black_asins)
         logger.info(f'共需要解析【{len(asins)}】个asin')
         if len(asins) == 0:
+            logger.info('【------------爬虫任务结束------------】\n\n')
+            self.change_task_status(self.task_id)
+            logger.debug('运行到%d行' % 248)
             return
 
             # 开一个10数量的线程池

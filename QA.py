@@ -88,7 +88,7 @@ class Q_and_A:
                 result.append((time, q, a, name, helpful))
                 if len(result) == int(self.number):
                     return result
-        # return result[:int(self.number)]
+        return result[:int(self.number)]
 
 
 if __name__ == '__main__':
