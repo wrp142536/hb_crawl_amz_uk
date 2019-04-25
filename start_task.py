@@ -209,10 +209,6 @@ class Start_Task(GET_TASK):
 
     def start(self):
         logger.info('【----------爬虫任务启动------------】')
-        # uk_tasks = self.get_black_flag_id()
-        # if not uk_tasks:
-        #     logger.info('没有获取任务')
-        #     logger.info('【------------爬虫任务结束------------】\n\n')
 
         # 查询任务id和黑名单标记
         tsk_data = self.get_task_id()
@@ -246,11 +242,10 @@ class Start_Task(GET_TASK):
             logger.info('【------------爬虫任务结束------------】\n\n')
             self.change_task_status(self.task_id)
             logger.debug('运行到%d行' % 248)
-
             return
 
-            # 开一个10数量的线程池
-        pool = threadpool.ThreadPool(10)
+            # 开一个的线程池
+        pool = threadpool.ThreadPool(3)
         # 创建任务
         reques = threadpool.makeRequests(listing_uk, asins, callback=self.callback_for_save_listing)
         # 添加所有任务
@@ -275,8 +270,7 @@ class Start_Task(GET_TASK):
         # pool.wait()
 
         logger.info('【------------爬虫任务结束------------】\n\n')
-        # 向队列发送退出命令
-        # qq.put('exit')
+
         return
 
     @run_time

@@ -8,8 +8,6 @@ from mylog import logger
 from spider_rules import *
 import urllib3
 
-# qq = my_queue()
-
 urllib3.disable_warnings()
 
 lst = Listing_Rules()
@@ -43,14 +41,14 @@ rule_by_key = Search_by_key()
 
 @retry(5)
 @run_time
+@CallTimesLimit(50, 60)
 def get_request(url):
     """
     对某个url进行get请求，
     :param url: url
     :return: html字符串
     """
-    # if not qq.full():
-    # headers = random_headers()
+
     proxies = my_proxy()
     resp = requests.get(url=url, proxies=proxies, verify=False, timeout=120)
     html = resp.text
@@ -59,29 +57,7 @@ def get_request(url):
     # 此处抛出异常，让装饰器处理，进行再次发起请求
     if resp.status_code != 200:
         raise ValueError
-
-    # if lenth < 2000:
-    #     path_name = re.split('/', url)[-2]
-    # if not os.path.exists(targetPath):
-    #     os.makedirs(targetPath)
-    # with open(f'errors_html/{path_name}.txt', 'w') as fb:
-    #     fb.write(f'状态码：【{resp.status_code}】,【内容：{html}】')
-
-    # print(resp.headers)
-    # resp = requests.get(url=url, headers=headers,verify=False)
-    # if is_robot(resp.text):
-    #     result = parse_robot(resp.text)
-    # else:
-    #     result = resp.text
-    # qq.put(0)
     return html
-#
-# logger.error('请求失败：{},错误原因：{})'.format(url, e))
-# return get_request(url)
-
-# else:
-#     time.sleep(1.5)
-#     get_request(url)
 
 
 def get_sell_time(asin, page):

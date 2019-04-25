@@ -1,11 +1,66 @@
-# import random
 import datetime
 import re
-import time
-import queue
-from threading import Thread
 from functools import wraps
 from mylog import logger
+import time
+from collections import deque
+import math
+from threading import Lock
+
+
+class Singleton:
+    """
+    单例模式
+    """
+
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, '_instance'):
+            cls._instance = object.__new__(cls)
+        return cls._instance
+
+
+class CallTimesLimit(Singleton):
+    """
+    每seconds秒执行m次
+    """
+
+    def __init__(self, m, seconds):
+        if int(m) < 1 or int(seconds) < 1:
+            raise ValueError('你傻逼啊！')
+        self.__len = m
+        self.__seconds = seconds
+        self.__dq = deque(maxlen=int(m) * 3)
+        self.lock = Lock()
+
+    def __call__(self, func):
+
+        self.__func = func
+        return self.__append
+
+    def __popleft(self):
+        self.__dq.popleft()
+
+    def __append(self, *args, **kwargs):
+
+        with self.lock:
+            if len(self.__dq) < self.__len:
+                # 前m个直接添加
+                # print(f'前{self.__len}个直接添加')
+                self.__dq.append(time.time())
+            else:
+                # 有数据,判断时间再添加进去
+                need_time = self.__seconds - (time.time() - self.__dq[len(self.__dq) - self.__len])
+                need_time = math.ceil(need_time)
+                if need_time > 0:
+                    # print(f'此处等待{need_time}秒')
+                    time.sleep(need_time)
+                    self.__dq.append(time.time())
+                else:
+                    # print(f'不需要等待')
+                    self.__dq.append(time.time())
+
+        result = self.__func(*args, **kwargs)
+        return result
 
 
 def my_proxy():
@@ -24,7 +79,8 @@ def run_time(func):
         start_time = time.time()
         logger.debug(f'''进入 {func.__name__} {args}''')
         aa = func(*args, **kwargs)
-        logger.debug(f'''{func.__name__}{args}耗时:{time.time() - start_time}''')
+        cost_time = time.time() - start_time
+        logger.debug(f'''{func.__name__}{args}耗时:{cost_time}''')
         logger.debug(f'''离开 {func.__name__} ''')
         return aa
 
@@ -185,17 +241,6 @@ def list_quchong(list0):
     return new_li
 
 
-class Singleton:
-    """
-    单例模式
-    """
-
-    def __new__(cls, *args, **kwargs):
-        if not hasattr(cls, '_instance'):
-            cls._instance = object.__new__(cls)
-        return cls._instance
-
-
 def replace_emoji(strs):
     EMOJI0 = re.compile('\n|\r|\t')
     EMOJI1 = re.compile(u'[\U00010000-\U0010ffff]')
@@ -225,20 +270,3 @@ def retry(n):
         return wraps
 
     return times
-
-
-def my_queue():
-    qq = queue.Queue(maxsize=10)
-
-    thred = Thread(target=queue_get, args=(qq,))
-    thred.start()
-    return qq
-
-
-def queue_get(qq):
-    while True:
-        if not qq.empty():
-            tmp = qq.get()
-            if tmp == 'exit':
-                break
-            time.sleep(1.5)
