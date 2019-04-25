@@ -259,14 +259,13 @@ def retry(n):
     """
 
     def times(func):
-        def wraps(*args, **kwargs):
+        def mywraps(*args, **kwargs):
             for _ in range(n):
                 try:
                     a = func(*args, **kwargs)
                     return a
-                except Exception:
+                except ValueError:
                     pass
-
-        return wraps
+        return mywraps
 
     return times

@@ -91,7 +91,7 @@ class My_log(Singleton):
         # 添加此行，防止日志重复记录
         if not logger.handlers:
             # 默认日志等级
-            logger.setLevel(logging.DEBUG)
+            logger.setLevel(logging.INFO)
 
             # 格式化输出
             formatter = logging.Formatter("%(asctime)s - %(filename)s - %(funcName)s - %(message)s", "%Y%m%d %H:%M:%S")
